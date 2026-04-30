@@ -47,6 +47,8 @@ function updateThemeIcon(theme, sunIcon, moonIcon) {
     }
   }
 }
+
+function updateNavigation() {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   
