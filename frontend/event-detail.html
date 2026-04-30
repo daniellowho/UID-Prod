@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Event Details</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .detail-hero { position: relative; }
+    .detail-hero img { width: 100%; height: 320px; object-fit: cover; display: block; }
+    .detail-content { padding: 20px; max-width: 1000px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <div class="logo">EventHub</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="user-dashboard.html">Dashboard</a></li>
+        <li><a href="profile.html">Profile</a></li>
+      </ul>
+      <div class="user-info" id="userInfo" style="display: none;"></div>
+    </div>
+  </nav>
+
+  <section class="detail-hero">
+    <img id="detailImage" src="" alt="Event image" />
+  </section>
+  <section class="detail-content">
+    <h1 id="detailTitle">Event Title</h1>
+    <p id="detailMeta" style="color:var(--text-secondary);"></p>
+    <p id="detailDescription"></p>
+    <button class="btn btn-primary" id="detailRegisterBtn">Register</button>
+  </section>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    (function(){
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      if (!id) { window.location.href = 'index.html'; }
+      else {
+        fetchEvent(id);
+      }
+    })();
+
+    function fetchEvent(id) {
+      EventsAPI.getById(id).then(ev => {
+        document.getElementById('detailImage').src = ev.image_url || 'https://images.unsplash.com/photo-1502006876504-007a7f0a8c1b?auto=format&fit=crop&w=1200&q=60';
+        document.getElementById('detailTitle').textContent = ev.title;
+        document.getElementById('detailMeta').textContent = `${new Date(ev.date).toLocaleDateString()} • ${ev.location || ''}`;
+        document.getElementById('detailDescription').textContent = ev.description || '';
+        document.getElementById('detailRegisterBtn').onclick = () => {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            window.location.href = 'login.html';
+            return;
+          }
+          // register for event via API
+          RegistrationsAPI.register(ev.id).then(r => {
+            alert(r.message);
+          }).catch(err => {
+            alert(err.message);
+          });
+        };
+      }).catch(() => {
+        window.location.href = 'index.html';
+      });
+    }
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - EventHub</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <style>
+    .profile-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .profile-header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .profile-avatar-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    .profile-avatar {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      color: white;
+      font-weight: 700;
+      box-shadow: var(--shadow-md);
+      border: 4px solid white;
+      overflow: hidden;
+      transition: all var(--transition-normal);
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-edit-btn {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow);
+    }
+
+    .avatar-edit-btn:hover {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .avatar-edit-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .profile-header h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .profile-header p {
+      color: var(--text-secondary);
+    }
+
+    .profile-card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      margin-bottom: 24px;
+      transition: background var(--transition-normal), box-shadow var(--transition-normal);
+    }
+
+    .profile-card h2 {
+      font-size: 1.2rem;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-card h2::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--gradient-primary);
+      border-radius: 2px;
+    }
+
+    .profile-form .form-group {
+      margin-bottom: 20px;
+    }
+
+    .profile-form input,
+    .profile-form textarea {
+      background: var(--bg-color);
+      transition: all var(--transition-fast);
+    }
+
+    .profile-form input:focus,
+    .profile-form textarea:focus {
+      background: white;
+    }
+
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon input {
+      padding-left: 44px;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+    }
+
+    .password-section {
+      border-top: 1px solid var(--border-color);
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+
+    .password-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: var(--text-secondary);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .btn-group .btn {
+      flex: 1;
+    }
+
+    .profile-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 24px;
+      background: var(--bg-color);
+      border-radius: var(--border-radius-sm);
+      transition: background var(--transition-normal);
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .info-item label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-item span {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .success-message {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      color: #059669;
+      padding: 16px 20px;
+      border-radius: var(--border-radius-sm);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .danger-zone {
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.05);
+      transition: all var(--transition-normal);
+    }
+
+    .danger-zone h2::before {
+      background: var(--danger-color);
+    }
+
+    .danger-zone h2 {
+      color: var(--danger-color);
+    }
+
+    .account-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .account-stat {
+      text-align: center;
+      padding: 16px;
+      background: var(--bg-color);
+      border-radius: var(--border-radius-sm);
+      transition: background var(--transition-normal);
+    }
+
+    .account-stat .number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .account-stat .label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .edit-profile-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 10px 20px;
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .edit-profile-btn:hover {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+      color: white;
+    }
+
+    .edit-profile-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .edit-form {
+      display: none;
+    }
+
+    .edit-form.active {
+      display: block;
+    }
+
+    .view-form {
+      display: block;
+    }
+
+    .view-form.hidden {
+      display: none;
+    }
+
+    .view-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 20px;
+      background: var(--bg-color);
+      border-radius: var(--border-radius-sm);
+      transition: background var(--transition-normal);
+    }
+
+    .view-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .view-info-item label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .view-info-item span {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    #avatarInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="logo">EventHub</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="user-dashboard.html">Dashboard</a></li>
+        <li><a href="profile.html" class="active">Profile</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <div class="user-info">
+          <span id="userName"></span>
+          <a href="#" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="dashboard-section">
+    <div class="container">
+      <div class="profile-container">
+        <div class="profile-header">
+          <button class="edit-profile-btn" id="editProfileBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit Profile
+          </button>
+          <div class="profile-avatar-wrapper">
+            <div class="profile-avatar" id="avatarContainer">
+              <span id="avatarInitial">U</span>
+            </div>
+            <label class="avatar-edit-btn" for="avatarInput" title="Change photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </label>
+            <input type="file" id="avatarInput" accept="image/*">
+          </div>
+          <h1 id="profileHeading">Hello, <span id="userFullName">User</span>!</h1>
+          <p style="color: var(--text-secondary);">Manage your profile and account settings</p>
+        </div>
+
+        <div class="profile-card" id="successCard" style="display: none;">
+          <div class="success-message" id="successMessage">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span id="successText">Profile updated successfully!</span>
+          </div>
+        </div>
+
+        <div class="profile-card">
+          <div class="view-form" id="viewForm">
+            <h2>Personal Information</h2>
+            <div class="view-info">
+              <div class="view-info-item">
+                <label>Full Name</label>
+                <span id="viewName">-</span>
+              </div>
+              <div class="view-info-item">
+                <label>Email Address</label>
+                <span id="viewEmail">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="edit-form" id="editForm">
+            <h2>Edit Personal Information</h2>
+            <form id="profileForm" class="profile-form">
+              <div class="form-group">
+                <label for="name">Full Name</label>
+                <div class="input-with-icon">
+                  <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <div class="input-with-icon">
+                  <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                </div>
+              </div>
+
+              <div class="btn-group">
+                <button type="button" class="btn btn-secondary" id="cancelEditBtn">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="updateProfileBtn">
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="profile-card password-section">
+          <h3>Change Password</h3>
+          <form id="passwordForm" class="profile-form">
+            <div class="form-group">
+              <label for="currentPassword">Current Password</label>
+              <div class="input-with-icon">
+                <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <input type="password" id="currentPassword" name="currentPassword" placeholder="Enter current password">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="newPassword">New Password</label>
+              <div class="input-with-icon">
+                <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                </svg>
+                <input type="password" id="newPassword" name="newPassword" placeholder="Enter new password" minlength="6">
+              </div>
+              <small class="help-text">Minimum 6 characters</small>
+            </div>
+
+            <div class="form-group">
+              <label for="confirmNewPassword">Confirm New Password</label>
+              <div class="input-with-icon">
+                <svg class="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <input type="password" id="confirmNewPassword" name="confirmNewPassword" placeholder="Confirm new password">
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <button type="submit" class="btn btn-warning" id="changePasswordBtn">
+                <span>Change Password</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="profile-card">
+          <h2>Account Overview</h2>
+          <div class="account-stats">
+            <div class="account-stat">
+              <div class="number" id="totalRegistrations">0</div>
+              <div class="label">Total Registrations</div>
+            </div>
+            <div class="account-stat">
+              <div class="number" id="approvedEvents">0</div>
+              <div class="label">Approved Events</div>
+            </div>
+            <div class="account-stat">
+              <div class="number" id="memberSince">-</div>
+              <div class="label">Member Since</div>
+            </div>
+          </div>
+
+          <div class="profile-info">
+            <div class="info-item">
+              <label>Account Type</label>
+              <span id="accountType">User</span>
+            </div>
+            <div class="info-item">
+              <label>Email Status</label>
+              <span style="color: var(--success-color);">Verified</span>
+            </div>
+            <div class="info-item">
+              <label>User ID</label>
+              <span id="userId">-</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-card danger-zone">
+          <h2>Danger Zone</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 20px;">
+            Once you delete your account, there is no going back. Please be certain.
+          </p>
+          <button class="btn btn-danger" id="deleteAccountBtn" onclick="showDeleteConfirmation()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              <line x1="10" y1="11" x2="10" y2="17"/>
+              <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+            Delete Account
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <div style="text-align: center;">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--danger-color)" stroke-width="2" style="margin-bottom: 20px;">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <h2 style="color: var(--danger-color); margin-bottom: 12px;">Delete Account?</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;">
+          This action cannot be undone. All your data will be permanently deleted.
+        </p>
+        <div class="form-group">
+          <label for="deleteConfirm">Type "DELETE" to confirm</label>
+          <input type="text" id="deleteConfirm" placeholder="DELETE" style="text-align: center;">
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn" onclick="deleteAccount()" disabled>Delete Forever</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="alertModal" class="modal">
+    <div class="modal-content alert-modal">
+      <span class="close-modal">&times;</span>
+      <div id="alertContent"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/profile.js"></script>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</body>
+</html>

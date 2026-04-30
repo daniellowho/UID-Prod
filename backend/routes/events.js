@@ -1,0 +1,12 @@
+const express = require('express');
+const router = express.Router();
+const { getAllEvents, getEventById, createEvent, updateEvent, deleteEvent } = require('../controllers/eventController');
+const { authenticate, isAdmin, isAuthenticated } = require('../middleware/auth');
+
+router.get('/', getAllEvents);
+router.get('/:id', getEventById);
+router.post('/', authenticate, isAdmin, createEvent);
+router.put('/:id', authenticate, isAdmin, updateEvent);
+router.delete('/:id', authenticate, isAdmin, deleteEvent);
+
+module.exports = router;

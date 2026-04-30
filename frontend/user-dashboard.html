@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard - EventHub</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="logo">EventHub</div>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="user-dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="profile.html">Profile</a></li>
+        <li><a href="admin.html" id="adminLink" style="display: none;">Admin</a></li>
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+          <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <div class="user-info">
+          <span id="userName"></span>
+          <a href="#" id="logoutBtn">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="dashboard-section">
+    <div class="container">
+      <div class="dashboard-header">
+        <h1>Welcome back, <span id="welcomeName">User</span>!</h1>
+        <p>Manage your event registrations and discover new opportunities</p>
+      </div>
+
+      <div class="dashboard-stats">
+        <div class="stat-card">
+          <h3>Registered Events</h3>
+          <div class="stat-number" id="statRegistered">0</div>
+        </div>
+        <div class="stat-card">
+          <h3>Pending Requests</h3>
+          <div class="stat-number" id="statPending">0</div>
+        </div>
+        <div class="stat-card">
+          <h3>Approved Events</h3>
+          <div class="stat-number" id="statApproved">0</div>
+        </div>
+      </div>
+
+      <div class="dashboard-content">
+        <div class="registrations-section">
+          <h2>My Registrations</h2>
+          <div id="registrationsList" class="registrations-list">
+            <div class="loading">Loading your registrations...</div>
+          </div>
+        </div>
+
+        <div class="upcoming-section">
+          <h2>Discover Events</h2>
+          <div id="upcomingEvents" class="upcoming-events">
+            <div class="loading">Loading upcoming events...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="alertModal" class="modal">
+    <div class="modal-content alert-modal">
+      <span class="close-modal">&times;</span>
+      <div id="alertContent"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</body>
+</html>
