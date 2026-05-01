@@ -296,10 +296,10 @@ async function loadRequests() {
           </div>
           ${reg.status === 'pending' ? `
             <div class="request-actions">
-              <button class="btn btn-success btn-sm" onclick="updateRequestStatus(${reg.id}, 'approved')">
+              <button class="btn btn-success btn-sm" onclick="updateRequestStatus(${reg.id}, 'approved', this)">
                 Approve
               </button>
-              <button class="btn btn-danger btn-sm" onclick="updateRequestStatus(${reg.id}, 'denied')">
+              <button class="btn btn-danger btn-sm" onclick="updateRequestStatus(${reg.id}, 'denied', this)">
                 Deny
               </button>
             </div>
@@ -378,8 +378,7 @@ async function deleteEvent(eventId) {
   }
 }
 
-async function updateRequestStatus(registrationId, status) {
-  const btn = event.target;
+async function updateRequestStatus(registrationId, status, btn) {
   btn.disabled = true;
   btn.innerHTML = '<span>Updating...</span>';
 

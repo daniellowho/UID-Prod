@@ -8,7 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkAuth() {
   const token = localStorage.getItem('token');
   if (token) {
-    window.location.href = 'user-dashboard.html';
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    window.location.href = user.role === 'admin' ? 'admin.html' : 'user-dashboard.html';
+    return;
   }
 
   const urlParams = new URLSearchParams(window.location.search);

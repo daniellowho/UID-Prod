@@ -3,7 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
   if (token && user) {
-    window.location.href = 'user-dashboard.html';
+    const role = user.role;
+    window.location.href = role === 'admin' ? 'admin.html' : 'user-dashboard.html';
+    return;
   }
 
   loadEvents();
