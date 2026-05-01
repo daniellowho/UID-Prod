@@ -52,6 +52,11 @@ const login = async (req, res) => {
     }
 
     const user = users[0];
+
+    if (!user.password) {
+      return res.status(401).json({ error: 'This account uses Google sign-in. Please log in with Google.' });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password);
 
     if (!validPassword) {
