@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('logoutBtn').addEventListener('click', () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '../../frontend/login.html';
+    window.location.href = '../login.html';
   });
 
   const eventSelect = document.getElementById('eventSelect');

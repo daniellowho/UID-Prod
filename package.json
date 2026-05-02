@@ -1,0 +1,10 @@
+{
+  "name": "eventhub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EventHub – Event Management System (backend + frontend + attendance in one)",
+  "scripts": {
+    "start": "npm install --prefix backend --silent && node backend/server.js",
+    "dev": "npm install --prefix backend --silent && npx --prefix backend nodemon backend/server.js"
+  }
+}
