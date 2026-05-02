@@ -60,7 +60,7 @@ function setupThemeToggle() {
 function requireAuth(redirectTo) {
   const token = getToken();
   if (!token) {
-    window.location.href = redirectTo || '../../frontend/login.html';
+    window.location.href = redirectTo || '../login.html';
     return null;
   }
   return JSON.parse(localStorage.getItem('user') || '{}');
@@ -70,7 +70,7 @@ function requireAdmin(redirectTo) {
   const user = requireAuth(redirectTo);
   if (user && user.role !== 'admin') {
     alert('Admin access required.');
-    window.location.href = redirectTo || '../../frontend/index.html';
+    window.location.href = redirectTo || '../index.html';
     return null;
   }
   return user;

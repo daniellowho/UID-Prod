@@ -1,9 +1,10 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { initDatabase } = require('./config/database');
 const authRoutes = require('./routes/auth');
@@ -20,6 +21,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve the frontend (and the attendance sub-folder that lives inside it)
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'session_secret',
