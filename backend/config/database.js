@@ -74,6 +74,21 @@ const initDatabase = async () => {
       );
     }
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS attendance_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        event_id INT NOT NULL,
+        token VARCHAR(36) UNIQUE NOT NULL,
+        checked_in BOOLEAN DEFAULT FALSE,
+        checked_in_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_user_event (user_id, event_id)
+      )
+    `);
+
     const [events] = await connection.query("SELECT * FROM events");
     if (events.length === 0) {
       const sampleEvents = [

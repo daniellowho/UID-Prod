@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My QR Pass – EventHub Attendance</title>
+  <link rel="stylesheet" href="css/attendance.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a class="logo" href="../../frontend/index.html">EventHub</a>
+      <ul class="nav-links">
+        <li><a href="../../frontend/index.html">Home</a></li>
+        <li><a href="../../frontend/events.html">Events</a></li>
+        <li><a href="../../frontend/user-dashboard.html">Dashboard</a></li>
+        <li><a href="user-qr.html" class="active">My QR Pass</a></li>
+      </ul>
+      <div class="user-badge">
+        <span id="userName"></span>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <h1>🎟️ My QR Pass</h1>
+    <p>Show this QR code to the event staff at check-in</p>
+  </div>
+
+  <div class="main-content">
+    <div class="container">
+
+      <!-- Event selector -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label for="eventSelect">Select your registered event</label>
+          <select id="eventSelect">
+            <option value="">— loading your registrations —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- QR card (hidden until event selected) -->
+      <div class="card" id="qrCard" style="display:none;">
+
+        <!-- Check-in status banner -->
+        <div id="statusBanner" class="status-banner pending" style="margin-bottom:1.5rem;">
+          <span class="status-icon">⏳</span>
+          <span id="statusText">Not checked in yet</span>
+        </div>
+
+        <!-- QR + participant ID -->
+        <div class="qr-wrapper">
+          <div id="qrcode"></div>
+          <div>
+            <p style="text-align:center;font-weight:600;font-size:1rem;margin-bottom:0.35rem;" id="participantName"></p>
+            <p class="participant-id" id="participantId"></p>
+          </div>
+          <p style="font-size:0.8rem;color:var(--text-secondary);text-align:center;max-width:280px;">
+            Present this QR code to the event staff. It's unique to you and this event.
+          </p>
+        </div>
+
+        <div style="text-align:center;margin-top:1rem;">
+          <button class="btn btn-outline" id="refreshBtn">🔄 Refresh Status</button>
+        </div>
+
+      </div>
+
+      <!-- No approved registrations message -->
+      <div class="card" id="noRegCard" style="display:none;">
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <p style="margin-top:0.5rem;">You have no approved registrations yet.</p>
+          <a href="../../frontend/events.html" class="btn btn-primary" style="margin-top:1rem;">Browse Events</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/attendance-api.js"></script>
+  <script src="js/user-qr.js"></script>
+</body>
+</html>

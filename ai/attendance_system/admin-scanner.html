@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Scanner – EventHub Attendance</title>
+  <link rel="stylesheet" href="css/attendance.css">
+  <!-- jsQR: pure-JS QR code decoder for camera frames -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"
+          integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
+          crossorigin="anonymous"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a class="logo" href="../../frontend/index.html">EventHub</a>
+      <ul class="nav-links">
+        <li><a href="../../frontend/admin.html">Admin Panel</a></li>
+        <li><a href="admin-scanner.html" class="active">Attendance Scanner</a></li>
+      </ul>
+      <div class="user-badge">
+        <span id="userName"></span>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <h1>📷 Attendance Scanner</h1>
+    <p>Scan participant QR codes to mark check-ins</p>
+  </div>
+
+  <div class="main-content">
+    <div class="container">
+
+      <div class="grid-2" style="align-items:start;">
+
+        <!-- Left: Scanner -->
+        <div>
+          <div class="card" style="margin-bottom:1.5rem;">
+            <h2 class="section-title">QR Scanner</h2>
+
+            <div class="scanner-area" id="scannerArea">
+              <video id="scanVideo" playsinline muted></video>
+              <canvas id="scanCanvas" style="display:none;"></canvas>
+              <div class="scan-overlay">
+                <div class="scan-frame"></div>
+                <div class="scan-line"></div>
+              </div>
+            </div>
+
+            <div id="scanResult" class="scan-result"></div>
+
+            <div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="startScanBtn">▶ Start Camera</button>
+              <button class="btn btn-outline" id="stopScanBtn" disabled>⏹ Stop</button>
+            </div>
+
+            <p style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.75rem;">
+              Allow camera access when prompted. Hold the QR code steady inside the frame.
+            </p>
+          </div>
+
+          <!-- Manual token entry fallback -->
+          <div class="card">
+            <h2 class="section-title">Manual Check-in</h2>
+            <div class="form-group">
+              <label for="manualToken">Enter token manually</label>
+              <input type="text" id="manualToken" placeholder="Paste the participant's token…">
+            </div>
+            <button class="btn btn-success" id="manualCheckInBtn">✔ Check In</button>
+            <div id="manualResult" class="scan-result" style="margin-top:0.75rem;"></div>
+          </div>
+        </div>
+
+        <!-- Right: Attendee list -->
+        <div class="card">
+          <h2 class="section-title">Attendance List</h2>
+
+          <div class="form-group">
+            <label for="eventFilter">Filter by event</label>
+            <select id="eventFilter">
+              <option value="">All events</option>
+            </select>
+          </div>
+
+          <div class="stats-row" id="statsRow"></div>
+
+          <ul class="attendee-list" id="attendeeList">
+            <li class="loading-text">Loading attendees…</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="js/attendance-api.js"></script>
+  <script src="js/admin-scanner.js"></script>
+</body>
+</html>

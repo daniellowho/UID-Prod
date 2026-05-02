@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const registrationRoutes = require('./routes/registrations');
 const adminRoutes = require('./routes/admin');
+const attendanceRoutes = require('./routes/attendance');
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Event Management API is running' });
