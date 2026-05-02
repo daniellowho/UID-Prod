@@ -1,10 +1,13 @@
-name: NodeJS with Webpack
+name: Node.js CI
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -22,7 +25,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Build
-        run: |
-          cd backend
-          npm install
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
