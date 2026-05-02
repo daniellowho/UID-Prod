@@ -1,6 +1,7 @@
 const { pool } = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 const QRCode = require('qrcode');
+const { sendThankYouEmail } = require('../ai/emailService');
 
 // Get or create a QR token for the authenticated user for a specific event
 const getOrCreateToken = async (req, res) => {
@@ -107,6 +108,18 @@ const checkIn = async (req, res) => {
       'UPDATE attendance_tokens SET checked_in = TRUE, checked_in_at = NOW() WHERE token = ?',
       [token]
     );
+
+    // Send thank-you + certificate email (non-blocking)
+    const [eventRows] = await pool.query('SELECT * FROM events WHERE id = ?', [record.event_id]);
+    if (eventRows.length > 0) {
+      sendThankYouEmail({
+        to: record.user_email,
+        userName: record.user_name,
+        eventTitle: record.event_title,
+        eventDate: eventRows[0].date,
+        eventLocation: eventRows[0].location
+      }).catch(err => console.error('[Email] Failed to send thank-you email:', err.message));
+    }
 
     res.json({
       success: true,

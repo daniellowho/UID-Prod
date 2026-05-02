@@ -74,6 +74,16 @@ const initDatabase = async () => {
       );
     }
 
+    // Add start_time column to events if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE events ADD COLUMN start_time TIME DEFAULT '09:00:00'`);
+    } catch (err) {
+      // MySQL error 1060 = "Duplicate column name" – safe to ignore
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding start_time column:', err.message);
+      }
+    }
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS attendance_tokens (
         id INT AUTO_INCREMENT PRIMARY KEY,
