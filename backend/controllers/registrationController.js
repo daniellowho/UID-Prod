@@ -1,4 +1,7 @@
 const { pool } = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
+const QRCode = require('qrcode');
+const { sendQRCodeEmail } = require('../ai/emailService');
 
 const registerForEvent = async (req, res) => {
   try {
@@ -104,6 +107,62 @@ const updateRegistrationStatus = async (req, res) => {
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Registration not found' });
+    }
+
+    // When approving, generate / retrieve the QR token and email it to the user
+    if (status === 'approved') {
+      try {
+        const [regRows] = await pool.query(
+          `SELECT r.user_id, r.event_id, u.name as user_name, u.email as user_email,
+                  e.title as event_title, e.date as event_date, e.location as event_location
+           FROM registrations r
+           JOIN users u ON r.user_id = u.id
+           JOIN events e ON r.event_id = e.id
+           WHERE r.id = ?`,
+          [registrationId]
+        );
+
+        if (regRows.length > 0) {
+          const reg = regRows[0];
+
+          // Get or create attendance token
+          let token;
+          const [existingToken] = await pool.query(
+            'SELECT token FROM attendance_tokens WHERE user_id = ? AND event_id = ?',
+            [reg.user_id, reg.event_id]
+          );
+
+          if (existingToken.length > 0) {
+            token = existingToken[0].token;
+          } else {
+            token = uuidv4();
+            await pool.query(
+              'INSERT INTO attendance_tokens (user_id, event_id, token) VALUES (?, ?, ?)',
+              [reg.user_id, reg.event_id, token]
+            );
+          }
+
+          // Generate QR data URL
+          const qrDataUrl = await QRCode.toDataURL(token, {
+            width: 220,
+            margin: 2,
+            color: { dark: '#1e293b', light: '#ffffff' }
+          });
+
+          // Send QR code email (non-blocking)
+          sendQRCodeEmail({
+            to: reg.user_email,
+            userName: reg.user_name,
+            eventTitle: reg.event_title,
+            eventDate: reg.event_date,
+            eventLocation: reg.event_location,
+            qrDataUrl,
+            token
+          }).catch(err => console.error('[Email] Failed to send QR code email:', err.message));
+        }
+      } catch (emailErr) {
+        console.error('[Email] Error preparing QR email:', emailErr.message);
+      }
     }
 
     res.json({ message: `Registration ${status} successfully` });

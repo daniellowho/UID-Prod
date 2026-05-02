@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thank You – EventHub</title>
+  <link rel="stylesheet" href="css/attendance.css">
+  <style>
+    .thankyou-hero {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+    }
+    .confetti-emoji {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 1rem;
+      animation: bounce 0.8s ease infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to   { transform: translateY(-12px); }
+    }
+    .thankyou-hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .thankyou-hero p {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+    }
+
+    /* Certificate card */
+    .certificate {
+      border: 3px solid var(--primary-color);
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f8f7ff, #ede9fe);
+      padding: 2.5rem;
+      text-align: center;
+      margin: 1.5rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+    [data-theme="dark"] .certificate {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+    }
+    .certificate::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -30px;
+      width: 140px; height: 140px;
+      background: rgba(99,102,241,0.08);
+      border-radius: 50%;
+    }
+    .certificate-label {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--primary-color);
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .certificate-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+    .certificate-name {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .certificate-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .certificate-event {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+    }
+    .certificate-meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .certificate-divider {
+      border: none;
+      border-top: 1px dashed var(--border-color);
+      margin: 1.2rem 0 1rem;
+    }
+    .certificate-seal {
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    /* Loading state */
+    .loading-pulse {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a class="logo" href="../index.html">EventHub</a>
+      <ul class="nav-links">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../events.html">Events</a></li>
+        <li><a href="../user-dashboard.html">Dashboard</a></li>
+      </ul>
+      <div class="user-badge">
+        <span id="userName"></span>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content" style="padding: 2rem 0 4rem;">
+    <div class="container" style="max-width: 680px;">
+
+      <div id="loadingState" class="loading-pulse">
+        ⏳ Loading your attendance record…
+      </div>
+
+      <div id="mainContent" style="display:none;">
+        <div class="thankyou-hero">
+          <span class="confetti-emoji">🎉</span>
+          <h1>Thank You for Attending!</h1>
+          <p id="heroSubtitle">Your attendance has been recorded. We hope you had a great time!</p>
+        </div>
+
+        <div class="card">
+          <div class="certificate">
+            <p class="certificate-label">Certificate of Attendance</p>
+            <p class="certificate-subtitle">This certifies that</p>
+            <p class="certificate-name" id="certName">–</p>
+            <p class="certificate-desc">has successfully attended</p>
+            <p class="certificate-event" id="certEvent">–</p>
+            <p class="certificate-meta" id="certMeta">–</p>
+            <hr class="certificate-divider">
+            <p class="certificate-seal">✦ Officially Awarded by EventHub ✦</p>
+          </div>
+
+          <div style="background: #ecfdf5; border-radius: 10px; padding: 14px 18px; border: 1px solid #a7f3d0; margin-bottom: 1rem;">
+            <p style="margin:0; font-size: 0.875rem; color: #065f46;">
+              📧 A certificate and thank-you email has been sent to your registered email address.
+            </p>
+          </div>
+
+          <div class="action-row">
+            <a href="../events.html" class="btn btn-primary">🔍 Browse More Events</a>
+            <a href="../user-dashboard.html" class="btn btn-outline">📋 My Dashboard</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shown if user navigates here without being checked in -->
+      <div id="notCheckedIn" class="card" style="display:none; text-align:center; padding: 2.5rem;">
+        <span style="font-size: 3rem; display:block; margin-bottom: 1rem;">⏳</span>
+        <h2 style="margin-bottom: 0.5rem;">Not Checked In Yet</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Your attendance hasn't been recorded for this event. Please show your QR pass to the event staff.
+        </p>
+        <a href="user-qr.html" class="btn btn-primary">🎟️ View My QR Pass</a>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/attendance-api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      setupThemeToggle();
+
+      const user = requireAuth();
+      if (!user) return;
+
+      document.getElementById('userName').textContent = user.name || 'User';
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '../login.html';
+      });
+
+      // Read eventId from URL query param and ensure it is a positive integer
+      const params = new URLSearchParams(window.location.search);
+      const rawEventId = params.get('eventId');
+      const eventId = rawEventId && /^\d+$/.test(rawEventId) ? rawEventId : null;
+
+      const loadingEl = document.getElementById('loadingState');
+      const mainEl = document.getElementById('mainContent');
+      const notCheckedEl = document.getElementById('notCheckedIn');
+
+      if (!eventId) {
+        loadingEl.style.display = 'none';
+        notCheckedEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const data = await AttendanceAPI.getToken(eventId);
+
+        loadingEl.style.display = 'none';
+
+        if (data.checked_in) {
+          // Populate certificate
+          document.getElementById('certName').textContent = user.name || 'Participant';
+          document.getElementById('certEvent').textContent = data.event_title || 'Event';
+          const checkedAt = data.checked_in_at
+            ? new Date(data.checked_in_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+            : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+          document.getElementById('certMeta').textContent = checkedAt;
+          document.getElementById('heroSubtitle').textContent =
+            `You attended "${data.event_title}". We hope you had a wonderful experience!`;
+          mainEl.style.display = 'block';
+        } else {
+          notCheckedEl.style.display = 'block';
+        }
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        notCheckedEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

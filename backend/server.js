@@ -12,6 +12,7 @@ const eventRoutes = require('./routes/events');
 const registrationRoutes = require('./routes/registrations');
 const adminRoutes = require('./routes/admin');
 const attendanceRoutes = require('./routes/attendance');
+const { startReminderScheduler } = require('./ai/eventReminders');
 
 const app = express();
 
@@ -89,6 +90,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log('Default admin credentials: admin@eventmanager.com / admin123');
+      startReminderScheduler();
     });
   } catch (error) {
     console.error('Failed to start server:', error);

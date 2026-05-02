@@ -40,11 +40,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('refreshBtn').addEventListener('click', () => loadQR(eventSelect.value));
 
   let loadedEventId = null; // track last loaded event for refresh
+  let statusPoller = null;  // setInterval id for polling
+
+  function startPolling(eventId) {
+    stopPolling();
+    statusPoller = setInterval(async () => {
+      try {
+        const data = await AttendanceAPI.getToken(eventId);
+        if (data.checked_in) {
+          stopPolling();
+          // Redirect to thank-you page (parseInt ensures eventId is numeric)
+          window.location.href = `thank-you.html?eventId=${parseInt(eventId, 10)}`;
+        }
+      } catch (pollErr) {
+        console.error('[QR Poll] Status check failed:', pollErr.message);
+      }
+    }, 5000); // poll every 5 seconds
+  }
+
+  function stopPolling() {
+    if (statusPoller !== null) {
+      clearInterval(statusPoller);
+      statusPoller = null;
+    }
+  }
 
   async function loadQR(eventId) {
     if (!eventId) {
       qrCard.style.display = 'none';
       noRegCard.style.display = 'none';
+      stopPolling();
       return;
     }
 
@@ -74,16 +99,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       const statusText = document.getElementById('statusText');
 
       if (data.checked_in) {
-        banner.className = 'status-banner checked-in';
-        const checkedAt = data.checked_in_at
-          ? new Date(data.checked_in_at).toLocaleString()
-          : '';
-        banner.querySelector('.status-icon').textContent = '✅';
-        statusText.textContent = `You have checked in!${checkedAt ? '  (' + checkedAt + ')' : ''}`;
+        // Already checked in – redirect straight to the thank-you page
+        stopPolling();
+        window.location.href = `thank-you.html?eventId=${parseInt(eventId, 10)}`;
+        return;
       } else {
         banner.className = 'status-banner pending';
         banner.querySelector('.status-icon').textContent = '⏳';
         statusText.textContent = 'Not checked in yet — show this QR to the staff';
+        // Start polling so the page auto-redirects when the admin marks attendance
+        startPolling(eventId);
       }
 
     } catch (err) {
