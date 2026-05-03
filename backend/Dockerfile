@@ -3,12 +3,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dependencies first for better layer caching
-COPY package*.json ./
+# Install backend dependencies first for better layer caching
+COPY backend/package*.json ./
 RUN npm ci --omit=dev
 
-# Copy the rest of the backend source
-COPY . .
+# Copy the backend source
+COPY backend/ .
+
+# Copy the frontend so Express can serve it as static files
+COPY frontend/ ../frontend/
 
 EXPOSE 3000
 

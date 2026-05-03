@@ -1,5 +1,6 @@
 // Local development default.
-// For production (GitHub Pages) set the BACKEND_URL repository variable in
-// Settings → Secrets and variables → Actions → Variables.
-// The deploy workflow replaces this value automatically at build time.
-const API_BASE_URL = 'http://localhost:3000/api';
+// On Railway the frontend is served by the same Express server as the API,
+// so the relative path '/api' works in all environments without any changes.
+const API_BASE_URL = window.location.origin.includes('localhost')
+  ? 'http://localhost:3000/api'
+  : '/api';
