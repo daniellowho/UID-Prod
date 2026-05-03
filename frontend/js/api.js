@@ -42,11 +42,6 @@ const AuthAPI = {
     body: JSON.stringify(credentials)
   }),
 
-  googleAuth: (googleData) => apiRequest('/auth/google', {
-    method: 'POST',
-    body: JSON.stringify(googleData)
-  }),
-
   getCurrentUser: () => apiRequest('/auth/me'),
 
   updateProfile: (userData) => apiRequest('/auth/profile', {

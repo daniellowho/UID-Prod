@@ -1,10 +1,6 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { initDatabase } = require('./config/database');
@@ -26,55 +22,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve the frontend (and the attendance sub-folder that lives inside it)
 app.use(express.static(path.join(__dirname, '../frontend')));
-
-const sessionStore = new MySQLStore({
-  clearExpired: true,
-  checkExpirationInterval: 900000,
-  expiration: 86400000
-}, require('./config/database').pool);
-
-app.use(session({
-  key: 'event_mgmt_sid',
-  secret: process.env.SESSION_SECRET || 'session_secret',
-  store: sessionStore,
-  resave: false,
-  saveUninitialized: false
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    const { pool } = require('./config/database');
-    let [users] = await pool.query('SELECT * FROM users WHERE google_id = ?', [profile.id]);
-    
-    if (users.length === 0) {
-      const [result] = await pool.query(
-        'INSERT INTO users (name, email, google_id, role) VALUES (?, ?, ?, ?)',
-        [profile.displayName, profile.emails[0].value, profile.id, 'user']
-      );
-      return done(null, { id: result.insertId, role: 'user' });
-    }
-    
-    return done(null, users[0]);
-  } catch (error) {
-    return done(error);
-  }
-}));
-
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((user, done) => done(null, user));
-
-app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/?error=auth_failed' }), (req, res) => {
-  res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?google_auth=success`);
-});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);

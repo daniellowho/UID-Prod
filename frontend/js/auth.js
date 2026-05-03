@@ -12,11 +12,6 @@ function checkAuth() {
     window.location.href = user.role === 'admin' ? 'admin.html' : 'user-dashboard.html';
     return;
   }
-
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('google_auth') === 'success') {
-    showToast('Google authentication successful!', 'success');
-  }
 }
 
 function setupThemeToggle() {
