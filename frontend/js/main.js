@@ -54,7 +54,7 @@ function displayEvents(events) {
     const imageUrl = event.image_url || defaultImages[imageIndex];
 
     return `
-      <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}">
+      <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}" onclick="openEventDetail(${event.id})">
         <div class="event-header">
           <h3>${escapeHtml(event.title)}</h3>
           <div class="event-meta">
@@ -66,7 +66,7 @@ function displayEvents(events) {
           <p class="event-description">${escapeHtml(event.description || 'No description available')}</p>
           <div class="event-footer">
             <span class="participants">${event.participants_count || 0} participants</span>
-            <button class="btn btn-primary btn-sm register-btn" onclick="handleRegisterClick(${event.id})">
+            <button class="btn btn-primary btn-sm register-btn" onclick="event.stopPropagation(); handleRegisterClick(${event.id})">
               Register
             </button>
           </div>
@@ -241,6 +241,10 @@ function showAlert(title, message, type) {
 
 function closeModal(modalId) {
   document.getElementById(modalId).style.display = 'none';
+}
+
+function openEventDetail(eventId) {
+  window.location.href = `event-detail.html?id=${eventId}`;
 }
 
 function formatDate(dateString) {
