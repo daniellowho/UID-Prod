@@ -1,8 +1,21 @@
+# Node
 node_modules/
 backend/node_modules/
-.env
-*.log
 npm-debug.log*
-.DS_Store
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Environment / secrets – never commit these
+.env
+.env.*
+!.env.example
+
+# Build outputs
 dist/
 build/
+_site/
+
+# OS
+.DS_Store
+Thumbs.db
