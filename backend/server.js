@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 require('dotenv').config({ path: path.join(__dirname, '.env') });
@@ -26,8 +27,16 @@ app.use(express.urlencoded({ extended: true }));
 // Serve the frontend (and the attendance sub-folder that lives inside it)
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+const sessionStore = new MySQLStore({
+  clearExpired: true,
+  checkExpirationInterval: 900000,
+  expiration: 86400000
+}, require('./config/database').pool);
+
 app.use(session({
+  key: 'event_mgmt_sid',
   secret: process.env.SESSION_SECRET || 'session_secret',
+  store: sessionStore,
   resave: false,
   saveUninitialized: false
 }));
