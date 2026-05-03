@@ -1,11 +1,19 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+// Support both custom DB_* env vars and Railway's MYSQL* env vars
+const DB_HOST     = process.env.DB_HOST     || process.env.MYSQLHOST     || process.env.MYSQL_HOST     || 'localhost';
+const DB_USER     = process.env.DB_USER     || process.env.MYSQLUSER     || process.env.MYSQL_USER     || 'root';
+const DB_PASSWORD = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '';
+const DB_NAME     = process.env.DB_NAME     || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'event_management';
+const DB_PORT     = parseInt(process.env.DB_PORT || process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306', 10);
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'event_management',
+  host: DB_HOST,
+  port: DB_PORT,
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -13,14 +21,25 @@ const pool = mysql.createPool({
 
 const initDatabase = async () => {
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || ''
+    host: DB_HOST,
+    port: DB_PORT,
+    user: DB_USER,
+    password: DB_PASSWORD
   });
 
   try {
-    await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'event_management'}`);
-    await connection.query(`USE ${process.env.DB_NAME || 'event_management'}`);
+    // On managed platforms (e.g. Railway) the database is pre-created and we
+    // may not have CREATE DATABASE privilege – that is fine, just continue.
+    try {
+      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\``);
+    } catch (err) {
+      if (err.errno !== 1044 && err.errno !== 1045 && err.errno !== 1227) {
+        // Not a permissions error – rethrow
+        throw err;
+      }
+      console.log('Note: CREATE DATABASE skipped (database already exists or insufficient privileges).');
+    }
+    await connection.query(`USE \`${DB_NAME}\``);
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
