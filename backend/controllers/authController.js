@@ -34,6 +34,7 @@ const signup = async (req, res) => {
       user: { id: result.insertId, name, email, role: 'user' }
     });
   } catch (error) {
+    console.error('Signup error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -75,6 +76,7 @@ const login = async (req, res) => {
       user: { id: user.id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

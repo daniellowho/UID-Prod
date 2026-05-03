@@ -42,6 +42,11 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
+  if (!process.env.JWT_SECRET) {
+    console.error('FATAL: JWT_SECRET environment variable is not set. Please add it to your .env file or Railway environment.');
+    process.exit(1);
+  }
+
   try {
     await initDatabase();
     app.listen(PORT, () => {

@@ -461,7 +461,7 @@
         const imageUrl = event.image_url || defaultImages[imageIndex];
 
         return `
-          <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}">
+          <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}" onclick="openEventDetail(${event.id})">
             <div class="event-image-container">
               <img src="${imageUrl}" alt="${escapeHtml(event.title)}" class="event-image" 
                    onerror="this.src='${defaultImages[imageIndex]}'">
@@ -601,6 +601,10 @@
 
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
+    }
+
+    function openEventDetail(eventId) {
+      window.location.href = `event-detail.html?id=${eventId}`;
     }
 
     function formatDate(dateString) {
