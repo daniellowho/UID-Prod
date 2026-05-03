@@ -11,15 +11,24 @@ const pool = mysql.createPool({
   connectionLimit: 10
 });
 const initDatabase = async () => {
+  const dbHost = process.env.DB_HOST || process.env.MYSQLHOST;
+  const dbUser = process.env.DB_USER || process.env.MYSQLUSER;
+  const dbPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD;
+  const dbName = process.env.DB_NAME || process.env.MYSQLDATABASE || 'event_management';
+
+  if (!dbHost || !dbUser || dbPassword === undefined) {
+    throw new Error('Missing required database environment variables (DB_HOST/MYSQLHOST, DB_USER/MYSQLUSER, DB_PASSWORD/MYSQLPASSWORD)');
+  }
+
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'Socialboy@123'
+    host: dbHost,
+    user: dbUser,
+    password: dbPassword
   });
 
   try {
-    await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'event_management'}`);
-    await connection.query(`USE ${process.env.DB_NAME || 'event_management'}`);
+    await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
+    await connection.query(`USE ${dbName}`);
 
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
