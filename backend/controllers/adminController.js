@@ -71,7 +71,8 @@ const getAllUsers = async (req, res) => {
 const getEmailLogs = async (req, res) => {
   try {
     const [logs] = await pool.query(
-      `SELECT * FROM email_logs ORDER BY sent_at DESC LIMIT 500`
+      `SELECT id, recipient_email, recipient_name, subject, email_type, status, error_message, sent_at
+       FROM email_logs ORDER BY sent_at DESC LIMIT 500`
     );
     res.json(logs);
   } catch (error) {
@@ -96,14 +97,18 @@ const sendAdminEmail = async (req, res) => {
       );
       targets = users;
     } else if (Array.isArray(recipients)) {
-      // recipients is an array of user ids
+      // recipients is an array of user ids — validate they are all integers
       if (recipients.length === 0) {
         return res.status(400).json({ error: 'No recipients selected' });
       }
-      const placeholders = recipients.map(() => '?').join(',');
+      const ids = recipients.map(id => parseInt(id, 10));
+      if (ids.some(id => !Number.isInteger(id) || id <= 0)) {
+        return res.status(400).json({ error: 'Invalid recipient IDs' });
+      }
+      const placeholders = ids.map(() => '?').join(',');
       const [users] = await pool.query(
         `SELECT id, name, email FROM users WHERE id IN (${placeholders}) AND role = 'user'`,
-        recipients
+        ids
       );
       targets = users;
     } else {

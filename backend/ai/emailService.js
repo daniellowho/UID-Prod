@@ -245,7 +245,7 @@ const logEmail = async ({ recipientEmail, recipientName, subject, emailType, sta
       [recipientEmail, recipientName || null, subject, emailType, status, errorMessage || null]
     );
   } catch (logErr) {
-    console.error('[Email] Failed to write email log:', logErr.message);
+    console.error('[Email] Failed to write email log:', logErr);
   }
 };
 
@@ -296,13 +296,20 @@ const sendWelcomeEmail = async ({ to, userName }) => {
 };
 
 // ─── Email: Custom (sent manually by admin) ───────────────────────────────────
+const escapeHtml = (text) => String(text)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+
 const sendCustomEmail = async ({ to, recipientName, subject, message }) => {
   const transporter = createTransporter();
 
   const body = `
     <h2 style="margin:0 0 8px;font-size:22px;color:#1e293b;">📬 Message from EventHub Admin</h2>
-    <p style="margin:0 0 24px;font-size:15px;color:#64748b;">Hi <strong>${recipientName || to}</strong>,</p>
-    <div style="background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:24px;font-size:15px;color:#334155;line-height:1.7;white-space:pre-wrap;">${message}</div>
+    <p style="margin:0 0 24px;font-size:15px;color:#64748b;">Hi <strong>${escapeHtml(recipientName || to)}</strong>,</p>
+    <div style="background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:24px;font-size:15px;color:#334155;line-height:1.7;white-space:pre-wrap;">${escapeHtml(message)}</div>
     <div style="text-align:center;">
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/events.html"
          style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 28px;border-radius:10px;">

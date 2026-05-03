@@ -159,7 +159,8 @@ async function loadAdminData() {
     loadEvents(),
     loadRequests(),
     loadUsers(),
-    loadEmailLogs()
+    loadEmailLogs(),
+    populateUserDropdown()
   ]);
 }
 
