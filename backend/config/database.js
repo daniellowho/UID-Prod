@@ -92,6 +92,15 @@ const initDatabase = async () => {
       }
     }
 
+    // Add github_id column to users if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN github_id VARCHAR(255)`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding github_id column:', err.message);
+      }
+    }
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS attendance_tokens (
         id INT AUTO_INCREMENT PRIMARY KEY,
