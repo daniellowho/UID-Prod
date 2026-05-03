@@ -489,6 +489,23 @@ body {
   border-color: var(--primary-color);
 }
 
+.btn-github {
+  background: #24292e;
+  color: #ffffff;
+  border: 2px solid #24292e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.btn-github:hover {
+  background: #1a1f24;
+  border-color: #1a1f24;
+  color: #ffffff;
+}
+
 .btn-block {
   width: 100%;
 }
@@ -1956,6 +1973,17 @@ body {
 [data-theme="dark"] .btn-google:hover {
   background: #334155;
   border-color: #6366f1;
+}
+
+[data-theme="dark"] .btn-github {
+  background: #161b22;
+  border-color: #30363d;
+  color: #f0f6fc;
+}
+
+[data-theme="dark"] .btn-github:hover {
+  background: #21262d;
+  border-color: #8b949e;
 }
 
 [data-theme="dark"] .events-section {

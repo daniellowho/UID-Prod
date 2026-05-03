@@ -14,8 +14,33 @@ function checkAuth() {
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('google_auth') === 'success') {
-    showToast('Google authentication successful!', 'success');
+
+  // Handle GitHub OAuth callback redirect
+  const oauthToken = urlParams.get('token');
+  const oauthUser = urlParams.get('user');
+  if (oauthToken && oauthUser) {
+    try {
+      const user = JSON.parse(atob(oauthUser));
+      localStorage.setItem('token', oauthToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      window.history.replaceState({}, document.title, window.location.pathname);
+      showToast('GitHub sign-in successful!', 'success');
+      setTimeout(() => {
+        window.location.href = user.role === 'admin' ? 'admin.html' : 'user-dashboard.html';
+      }, 500);
+      return;
+    } catch (e) {
+      showToast('Authentication error. Please try again.', 'error');
+    }
+  }
+
+  const error = urlParams.get('error');
+  if (error === 'github_auth_failed') {
+    showToast('GitHub sign-in failed. Please try again.', 'error');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } else if (error === 'github_no_email') {
+    showToast('Could not retrieve your GitHub email. Make sure your email is public or verified.', 'error');
+    window.history.replaceState({}, document.title, window.location.pathname);
   }
 }
 

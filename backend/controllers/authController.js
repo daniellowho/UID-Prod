@@ -54,7 +54,7 @@ const login = async (req, res) => {
     const user = users[0];
 
     if (!user.password) {
-      return res.status(401).json({ error: 'This account uses Google sign-in. Please log in with Google.' });
+      return res.status(401).json({ error: 'This account has no password set. Please contact support.' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
@@ -71,42 +71,6 @@ const login = async (req, res) => {
 
     res.json({
       message: 'Login successful',
-      token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role }
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-};
-
-const googleCallback = async (req, res) => {
-  try {
-    const { googleId, name, email } = req.body;
-
-    let [users] = await pool.query('SELECT * FROM users WHERE google_id = ? OR email = ?', [googleId, email]);
-
-    let user;
-    if (users.length === 0) {
-      const [result] = await pool.query(
-        'INSERT INTO users (name, email, google_id, role) VALUES (?, ?, ?, ?)',
-        [name, email, googleId, 'user']
-      );
-      user = { id: result.insertId, name, email, role: 'user' };
-    } else {
-      user = users[0];
-      if (!user.google_id) {
-        await pool.query('UPDATE users SET google_id = ? WHERE id = ?', [googleId, user.id]);
-      }
-    }
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.json({
-      message: 'Google login successful',
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role }
     });
@@ -200,4 +164,4 @@ const deleteAccount = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, googleCallback, getCurrentUser, updateProfile, changePassword, deleteAccount };
+module.exports = { signup, login, getCurrentUser, updateProfile, changePassword, deleteAccount };
