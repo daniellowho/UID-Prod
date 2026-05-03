@@ -8,6 +8,16 @@ const DB_PASSWORD = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || proc
 const DB_NAME     = process.env.DB_NAME     || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'event_management';
 const DB_PORT     = parseInt(process.env.DB_PORT || process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306', 10);
 
+// Validate DB_NAME to prevent SQL injection via the database identifier
+if (!/^\w+$/.test(DB_NAME)) {
+  throw new Error(`Invalid DB_NAME: "${DB_NAME}". Only alphanumeric characters and underscores are allowed.`);
+}
+
+// Named MySQL error codes for permission-denied scenarios
+const ER_DBACCESS_DENIED_ERROR        = 1044;
+const ER_ACCESS_DENIED_ERROR          = 1045;
+const ER_SPECIFIC_ACCESS_DENIED_ERROR = 1227;
+
 const pool = mysql.createPool({
   host: DB_HOST,
   port: DB_PORT,
@@ -33,7 +43,7 @@ const initDatabase = async () => {
     try {
       await connection.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\``);
     } catch (err) {
-      if (err.errno !== 1044 && err.errno !== 1045 && err.errno !== 1227) {
+      if (err.errno !== ER_DBACCESS_DENIED_ERROR && err.errno !== ER_ACCESS_DENIED_ERROR && err.errno !== ER_SPECIFIC_ACCESS_DENIED_ERROR) {
         // Not a permissions error – rethrow
         throw err;
       }
