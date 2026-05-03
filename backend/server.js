@@ -9,6 +9,7 @@ const eventRoutes = require('./routes/events');
 const registrationRoutes = require('./routes/registrations');
 const adminRoutes = require('./routes/admin');
 const attendanceRoutes = require('./routes/attendance');
+const chatbotRoutes = require('./ai/chatbot');
 const { startReminderScheduler } = require('./ai/eventReminders');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Event Management API is running' });
