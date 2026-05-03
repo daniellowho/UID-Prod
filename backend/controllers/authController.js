@@ -1,6 +1,7 @@
 const { pool } = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendWelcomeEmail } = require('../ai/emailService');
 require('dotenv').config();
 
 const signup = async (req, res) => {
@@ -27,6 +28,10 @@ const signup = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail({ to: email, userName: name })
+      .catch(err => console.error('[Email] Failed to send welcome email:', err.message));
 
     res.status(201).json({
       message: 'User registered successfully',

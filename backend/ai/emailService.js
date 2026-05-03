@@ -1,6 +1,13 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+// Lazy-load pool to avoid circular-require issues (database → emailService → database)
+let _pool = null;
+const getPool = () => {
+  if (!_pool) _pool = require('../config/database').pool;
+  return _pool;
+};
+
 // Create reusable transporter using SMTP settings from environment
 const createTransporter = () => {
   return nodemailer.createTransport({
@@ -119,12 +126,19 @@ const sendEventReminder = async ({ to, userName, eventTitle, eventDate, eventLoc
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance/user-qr.html" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 28px;border-radius:10px;">🎟️ View My QR Pass</a>
     </div>`}`;
 
-  await transporter.sendMail({
-    from: FROM_ADDRESS,
-    to,
-    subject: `${emoji} ${minutesLeft <= 2 ? 'JOIN NOW!' : `${minutesLeft} mins left –`} ${eventTitle}`,
-    html: emailWrapper(body)
-  });
+  await withLog(
+    () => transporter.sendMail({
+      from: FROM_ADDRESS,
+      to,
+      subject: `${emoji} ${minutesLeft <= 2 ? 'JOIN NOW!' : `${minutesLeft} mins left –`} ${eventTitle}`,
+      html: emailWrapper(body)
+    }),
+    {
+      recipientEmail: to, recipientName: userName,
+      subject: `${emoji} ${minutesLeft <= 2 ? 'JOIN NOW!' : `${minutesLeft} mins left –`} ${eventTitle}`,
+      emailType: 'reminder'
+    }
+  );
 };
 
 // ─── Email: QR code (sent on registration approval) ───────────────────────────
@@ -174,13 +188,16 @@ const sendQRCodeEmail = async ({ to, userName, eventTitle, eventDate, eventLocat
       <p style="margin:0;font-size:13px;color:#065f46;">💡 <strong>Tip:</strong> Save this email or bookmark your QR pass page for easy access on event day.</p>
     </div>`;
 
-  await transporter.sendMail({
-    from: FROM_ADDRESS,
-    to,
-    subject: `🎟️ Your QR Pass for ${eventTitle}`,
-    html: emailWrapper(body),
-    attachments
-  });
+  await withLog(
+    () => transporter.sendMail({
+      from: FROM_ADDRESS,
+      to,
+      subject: `🎟️ Your QR Pass for ${eventTitle}`,
+      html: emailWrapper(body),
+      attachments
+    }),
+    { recipientEmail: to, recipientName: userName, subject: `🎟️ Your QR Pass for ${eventTitle}`, emailType: 'qr_code' }
+  );
 };
 
 // ─── Email: Thank you + certificate (sent after check-in) ────────────────────
@@ -204,12 +221,104 @@ const sendThankYouEmail = async ({ to, userName, eventTitle, eventDate, eventLoc
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/events.html" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 28px;border-radius:10px;">Browse More Events</a>
     </div>`;
 
-  await transporter.sendMail({
-    from: FROM_ADDRESS,
-    to,
-    subject: `🎊 Thank you for attending ${eventTitle}! Your certificate is here`,
-    html: emailWrapper(body)
-  });
+  await withLog(
+    () => transporter.sendMail({
+      from: FROM_ADDRESS,
+      to,
+      subject: `🎊 Thank you for attending ${eventTitle}! Your certificate is here`,
+      html: emailWrapper(body)
+    }),
+    {
+      recipientEmail: to, recipientName: userName,
+      subject: `🎊 Thank you for attending ${eventTitle}! Your certificate is here`,
+      emailType: 'thank_you'
+    }
+  );
 };
 
-module.exports = { sendEventReminder, sendQRCodeEmail, sendThankYouEmail };
+// ─── Internal: log every email attempt ───────────────────────────────────────
+const logEmail = async ({ recipientEmail, recipientName, subject, emailType, status, errorMessage }) => {
+  try {
+    await getPool().query(
+      `INSERT INTO email_logs (recipient_email, recipient_name, subject, email_type, status, error_message)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [recipientEmail, recipientName || null, subject, emailType, status, errorMessage || null]
+    );
+  } catch (logErr) {
+    console.error('[Email] Failed to write email log:', logErr.message);
+  }
+};
+
+// ─── Wrap a send call with automatic logging ─────────────────────────────────
+const withLog = async (sendFn, logMeta) => {
+  try {
+    await sendFn();
+    await logEmail({ ...logMeta, status: 'sent' });
+  } catch (err) {
+    await logEmail({ ...logMeta, status: 'failed', errorMessage: err.message });
+    throw err;
+  }
+};
+
+// ─── Email: Welcome (sent on account registration) ────────────────────────────
+const sendWelcomeEmail = async ({ to, userName }) => {
+  const transporter = createTransporter();
+
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:22px;color:#1e293b;">👋 Welcome to EventHub!</h2>
+    <p style="margin:0 0 24px;font-size:15px;color:#64748b;">
+      Hi <strong>${userName}</strong>, thank you for creating your account on EventHub!
+      You can now browse events, register for upcoming activities, and track your attendance.
+    </p>
+
+    <div style="background:#f0fdf4;border-radius:10px;padding:14px 18px;border:1px solid #bbf7d0;margin-bottom:24px;">
+      <p style="margin:0;font-size:14px;color:#166534;">
+        🎉 Your account is ready. Browse the latest events and submit a registration request — the admin will approve it shortly.
+      </p>
+    </div>
+
+    <div style="text-align:center;margin-bottom:16px;">
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/events.html"
+         style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 28px;border-radius:10px;">
+        🗓️ Browse Events
+      </a>
+    </div>`;
+
+  await withLog(
+    () => transporter.sendMail({
+      from: FROM_ADDRESS,
+      to,
+      subject: `👋 Welcome to EventHub, ${userName}!`,
+      html: emailWrapper(body)
+    }),
+    { recipientEmail: to, recipientName: userName, subject: `👋 Welcome to EventHub, ${userName}!`, emailType: 'welcome' }
+  );
+};
+
+// ─── Email: Custom (sent manually by admin) ───────────────────────────────────
+const sendCustomEmail = async ({ to, recipientName, subject, message }) => {
+  const transporter = createTransporter();
+
+  const body = `
+    <h2 style="margin:0 0 8px;font-size:22px;color:#1e293b;">📬 Message from EventHub Admin</h2>
+    <p style="margin:0 0 24px;font-size:15px;color:#64748b;">Hi <strong>${recipientName || to}</strong>,</p>
+    <div style="background:#f8fafc;border-radius:10px;padding:20px;margin-bottom:24px;font-size:15px;color:#334155;line-height:1.7;white-space:pre-wrap;">${message}</div>
+    <div style="text-align:center;">
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/events.html"
+         style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 28px;border-radius:10px;">
+        Visit EventHub
+      </a>
+    </div>`;
+
+  await withLog(
+    () => transporter.sendMail({
+      from: FROM_ADDRESS,
+      to,
+      subject,
+      html: emailWrapper(body)
+    }),
+    { recipientEmail: to, recipientName: recipientName || null, subject, emailType: 'custom' }
+  );
+};
+
+module.exports = { sendEventReminder, sendQRCodeEmail, sendThankYouEmail, sendWelcomeEmail, sendCustomEmail };

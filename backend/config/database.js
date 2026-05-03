@@ -133,6 +133,19 @@ const initDatabase = async () => {
       }
     }
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS email_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        recipient_email VARCHAR(255) NOT NULL,
+        recipient_name VARCHAR(255),
+        subject VARCHAR(500),
+        email_type ENUM('welcome', 'qr_code', 'reminder', 'thank_you', 'custom') DEFAULT 'custom',
+        status ENUM('sent', 'failed') DEFAULT 'sent',
+        error_message TEXT,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('Database initialized successfully');
   } finally {
     await connection.end();

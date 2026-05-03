@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const { sendCustomEmail } = require('../ai/emailService');
 
 const getAnalytics = async (req, res) => {
   try {
@@ -67,4 +68,66 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { getAnalytics, getAllUsers };
+const getEmailLogs = async (req, res) => {
+  try {
+    const [logs] = await pool.query(
+      `SELECT * FROM email_logs ORDER BY sent_at DESC LIMIT 500`
+    );
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const sendAdminEmail = async (req, res) => {
+  try {
+    const { recipients, subject, message } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({ error: 'Subject and message are required' });
+    }
+
+    let targets = [];
+
+    if (!recipients || recipients === 'all') {
+      // Send to all non-admin users
+      const [users] = await pool.query(
+        "SELECT id, name, email FROM users WHERE role = 'user'"
+      );
+      targets = users;
+    } else if (Array.isArray(recipients)) {
+      // recipients is an array of user ids
+      if (recipients.length === 0) {
+        return res.status(400).json({ error: 'No recipients selected' });
+      }
+      const placeholders = recipients.map(() => '?').join(',');
+      const [users] = await pool.query(
+        `SELECT id, name, email FROM users WHERE id IN (${placeholders}) AND role = 'user'`,
+        recipients
+      );
+      targets = users;
+    } else {
+      return res.status(400).json({ error: 'Invalid recipients value' });
+    }
+
+    if (targets.length === 0) {
+      return res.status(400).json({ error: 'No valid recipients found' });
+    }
+
+    const results = await Promise.allSettled(
+      targets.map(user =>
+        sendCustomEmail({ to: user.email, recipientName: user.name, subject, message })
+      )
+    );
+
+    const sent = results.filter(r => r.status === 'fulfilled').length;
+    const failed = results.filter(r => r.status === 'rejected').length;
+
+    res.json({ message: `Email sent to ${sent} user(s)${failed > 0 ? `, ${failed} failed` : ''}.`, sent, failed });
+  } catch (error) {
+    console.error('sendAdminEmail error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { getAnalytics, getAllUsers, getEmailLogs, sendAdminEmail };
