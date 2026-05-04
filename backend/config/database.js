@@ -146,6 +146,20 @@ const initDatabase = async () => {
       )
     `);
 
+    // Deduplication table for automated event reminders (survives server restarts)
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS reminder_sent_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        event_id INT NOT NULL,
+        bucket_label VARCHAR(10) NOT NULL,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_reminder (user_id, event_id, bucket_label),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+      )
+    `);
+
     console.log('Database initialized successfully');
   } finally {
     await connection.end();

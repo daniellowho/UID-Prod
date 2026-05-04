@@ -2,16 +2,11 @@ const cron = require('node-cron');
 const { pool } = require('../config/database');
 const { sendEventReminder } = require('./emailService');
 
-// Track which (user_id, event_id, bucket) combos have already been notified
-// to avoid sending duplicate reminders in the same run window.
-// In a multi-process environment this should be stored in the DB; for a
-// single-process server an in-memory Set is sufficient.
-const notified = new Set();
-
+// Reminder buckets: 30 mins to go, 15 mins to go, 5 mins to go (join now!)
 const REMINDER_BUCKETS = [
   { label: '30min', minutesBefore: 30, windowMinutes: 1 },
-  { label: '10min', minutesBefore: 10, windowMinutes: 1 },
-  { label: '2min',  minutesBefore: 2,  windowMinutes: 1 }
+  { label: '15min', minutesBefore: 15, windowMinutes: 1 },
+  { label: '5min',  minutesBefore: 5,  windowMinutes: 1 }
 ];
 
 /**
@@ -24,8 +19,7 @@ const checkAndSendReminders = async () => {
 
     for (const bucket of REMINDER_BUCKETS) {
       // Target datetime: the moment minutesBefore minutes in the future.
-      // We look for events whose start_datetime is approximately that far away,
-      // i.e. events that will start in ~minutesBefore minutes from now.
+      // We look for events whose start_datetime is approximately that far away.
       const targetTime = new Date(now.getTime() + bucket.minutesBefore * 60 * 1000);
       const windowMs = (bucket.windowMinutes / 2) * 60 * 1000;
 
@@ -56,10 +50,31 @@ const checkAndSendReminders = async () => {
           [event.id]
         );
 
+        if (registrations.length === 0) continue;
+
+        // Bulk-fetch already-sent reminders for this event/bucket to avoid
+        // unnecessary DB writes in the per-user loop below.
+        const [alreadySentRows] = await pool.query(
+          `SELECT user_id FROM reminder_sent_log WHERE event_id = ? AND bucket_label = ?`,
+          [event.id, bucket.label]
+        );
+        const alreadySent = new Set(alreadySentRows.map(r => r.user_id));
+
         for (const reg of registrations) {
-          const key = `${reg.user_id}:${event.id}:${bucket.label}`;
-          if (notified.has(key)) continue;
-          notified.add(key);
+          if (alreadySent.has(reg.user_id)) continue;
+
+          // Use DB-backed deduplication so reminders aren't re-sent after restarts.
+          // INSERT IGNORE returns affectedRows=0 if the row already existed.
+          try {
+            const [insertResult] = await pool.query(
+              `INSERT IGNORE INTO reminder_sent_log (user_id, event_id, bucket_label) VALUES (?, ?, ?)`,
+              [reg.user_id, event.id, bucket.label]
+            );
+            if (insertResult.affectedRows === 0) continue; // another process beat us to it
+          } catch (dbErr) {
+            console.error('[Reminders] DB deduplication error:', dbErr.message);
+            continue;
+          }
 
           try {
             await sendEventReminder({
@@ -73,6 +88,15 @@ const checkAndSendReminders = async () => {
             console.log(`[Reminders] Sent ${bucket.label} reminder to ${reg.user_email} for event "${event.title}"`);
           } catch (emailErr) {
             console.error(`[Reminders] Failed to send reminder to ${reg.user_email}:`, emailErr.message);
+            // Roll back the deduplication record so it can be retried next minute
+            try {
+              await pool.query(
+                `DELETE FROM reminder_sent_log WHERE user_id = ? AND event_id = ? AND bucket_label = ?`,
+                [reg.user_id, event.id, bucket.label]
+              );
+            } catch (delErr) {
+              console.error('[Reminders] Failed to roll back reminder_sent_log:', delErr.message);
+            }
           }
         }
       }
@@ -93,16 +117,10 @@ const formatDatetime = (date) => {
  * Start the cron job.  Runs every minute.
  */
 const startReminderScheduler = () => {
-  // Purge the in-memory notified set once a day to avoid unbounded growth
-  cron.schedule('0 0 * * *', () => {
-    notified.clear();
-    console.log('[Reminders] Notification cache cleared');
-  });
-
   // Run the reminder check every minute
   cron.schedule('* * * * *', checkAndSendReminders);
 
-  console.log('[Reminders] Event reminder scheduler started (runs every minute)');
+  console.log('[Reminders] Event reminder scheduler started – buckets: 30 min, 15 min, 5 min');
 };
 
 module.exports = { startReminderScheduler };
