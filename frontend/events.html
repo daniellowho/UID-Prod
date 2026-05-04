@@ -297,6 +297,22 @@
       <div class="filter-bar">
         <label for="searchInput">Search:</label>
         <input type="text" id="searchInput" placeholder="Search events...">
+        <label for="categoryFilter">Category:</label>
+        <select id="categoryFilter">
+          <option value="all">All Categories</option>
+          <option value="conference">Conference</option>
+          <option value="workshop">Workshop</option>
+          <option value="hackathon">Hackathon</option>
+          <option value="seminar">Seminar</option>
+          <option value="networking">Networking</option>
+          <option value="other">Other</option>
+        </select>
+        <label for="statusFilter">Status:</label>
+        <select id="statusFilter">
+          <option value="all">All Events</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="past">Past</option>
+        </select>
         <label for="sortSelect">Sort by:</label>
         <select id="sortSelect">
           <option value="date-asc">Date (Soonest)</option>
@@ -333,7 +349,32 @@
 
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2026 EventHub. All rights reserved.</p>
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">EventHub</div>
+          <p>Discover, register, and attend amazing events. Your next great experience is just a click away.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Account</h4>
+          <ul>
+            <li><a href="user-dashboard.html">Dashboard</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            <li><a href="attendance/user-qr.html">My QR Pass</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 EventHub. All rights reserved.</p>
+      </div>
     </div>
   </footer>
 

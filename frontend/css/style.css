@@ -239,7 +239,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-primary);
   line-height: 1.6;
@@ -2279,4 +2279,173 @@ body {
   .email-log-item > div:nth-child(5) {
     display: none;
   }
+}
+
+/* ─── Category badge ──────────────────────────────────────────────────────── */
+.event-category-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 980px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.category-conference   { background: rgba(10,132,255,0.15);  color: var(--primary-color); border: 1px solid rgba(10,132,255,0.25); }
+.category-workshop     { background: rgba(191,90,242,0.15);  color: var(--accent-purple); border: 1px solid rgba(191,90,242,0.25); }
+.category-hackathon    { background: rgba(50,215,75,0.12);   color: var(--success-color); border: 1px solid rgba(50,215,75,0.22); }
+.category-seminar      { background: rgba(90,200,245,0.15);  color: var(--accent-teal);   border: 1px solid rgba(90,200,245,0.25); }
+.category-networking   { background: rgba(255,159,10,0.15);  color: var(--warning-color); border: 1px solid rgba(255,159,10,0.25); }
+.category-other        { background: rgba(84,84,88,0.12);    color: var(--text-secondary);border: 1px solid var(--border-color); }
+
+/* ─── Capacity bar ────────────────────────────────────────────────────────── */
+.capacity-bar-wrapper {
+  margin-top: 10px;
+}
+.capacity-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.capacity-bar {
+  height: 5px;
+  background: var(--border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.capacity-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gradient-primary);
+  transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.capacity-bar-fill.full {
+  background: var(--danger-color);
+}
+.capacity-bar-fill.near-full {
+  background: var(--warning-color);
+}
+
+/* ─── Event full badge ────────────────────────────────────────────────────── */
+.event-full-badge {
+  background: rgba(255,69,58,0.15);
+  color: var(--danger-color);
+  border: 1px solid rgba(255,69,58,0.25);
+  padding: 3px 10px;
+  border-radius: 980px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Enhanced footer ─────────────────────────────────────────────────────── */
+.footer {
+  background: #000000;
+  color: rgba(245, 245, 247, 0.6);
+  padding: 48px 0 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 40px;
+  margin-bottom: 36px;
+}
+
+.footer-brand .footer-logo {
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.75) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
+}
+
+.footer-brand p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: rgba(245,245,247,0.5);
+  max-width: 260px;
+}
+
+.footer-col h4 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(245,245,247,0.4);
+  margin-bottom: 14px;
+}
+
+.footer-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-col ul li {
+  margin-bottom: 8px;
+}
+
+.footer-col ul li a {
+  color: rgba(245,245,247,0.55);
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color var(--transition-fast);
+}
+
+.footer-col ul li a:hover {
+  color: #f5f5f7;
+}
+
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 20px;
+  text-align: center;
+}
+
+.footer-bottom p {
+  font-size: 0.82rem;
+  color: rgba(245,245,247,0.35);
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .footer-brand p { max-width: 100%; }
+}
+
+/* ─── Share button ────────────────────────────────────────────────────────── */
+.btn-share {
+  background: rgba(255,255,255,0.08);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+.btn-share:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* ─── Events filter bar improvements ─────────────────────────────────────── */
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }

@@ -139,9 +139,33 @@
                   <input type="date" id="eventDate" required>
                 </div>
               </div>
-              <div class="form-group">
-                <label for="eventLocation">Location</label>
-                <input type="text" id="eventLocation" placeholder="Enter location">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="eventTime">Start Time</label>
+                  <input type="time" id="eventTime" value="09:00">
+                </div>
+                <div class="form-group">
+                  <label for="eventCapacity">Max Capacity</label>
+                  <input type="number" id="eventCapacity" placeholder="Leave blank for unlimited" min="1">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="eventLocation">Location</label>
+                  <input type="text" id="eventLocation" placeholder="Enter location">
+                </div>
+                <div class="form-group">
+                  <label for="eventCategory">Category</label>
+                  <select id="eventCategory">
+                    <option value="">Select category</option>
+                    <option value="conference">Conference</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="hackathon">Hackathon</option>
+                    <option value="seminar">Seminar</option>
+                    <option value="networking">Networking</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
               </div>
               <div class="form-group">
                 <label for="eventDescription">Description</label>
@@ -221,13 +245,37 @@
           <label for="editEventTitle">Event Title</label>
           <input type="text" id="editEventTitle" required>
         </div>
-        <div class="form-group">
-          <label for="editEventDate">Date</label>
-          <input type="date" id="editEventDate" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEventDate">Date</label>
+            <input type="date" id="editEventDate" required>
+          </div>
+          <div class="form-group">
+            <label for="editEventTime">Start Time</label>
+            <input type="time" id="editEventTime">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEventLocation">Location</label>
+            <input type="text" id="editEventLocation">
+          </div>
+          <div class="form-group">
+            <label for="editEventCategory">Category</label>
+            <select id="editEventCategory">
+              <option value="">Select category</option>
+              <option value="conference">Conference</option>
+              <option value="workshop">Workshop</option>
+              <option value="hackathon">Hackathon</option>
+              <option value="seminar">Seminar</option>
+              <option value="networking">Networking</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
-          <label for="editEventLocation">Location</label>
-          <input type="text" id="editEventLocation">
+          <label for="editEventCapacity">Max Capacity</label>
+          <input type="number" id="editEventCapacity" placeholder="Leave blank for unlimited" min="1">
         </div>
         <div class="form-group">
           <label for="editEventDescription">Description</label>
@@ -283,6 +331,33 @@
       document.documentElement.setAttribute('data-theme', savedTheme);
     })();
   </script>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">EventHub Admin</div>
+          <p>Manage events, registrations, users, and communications from one place.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Admin</h4>
+          <ul>
+            <li><a href="admin.html">Dashboard</a></li>
+            <li><a href="attendance/admin-scanner.html">Attendance Scanner</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Site</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="user-dashboard.html">User Dashboard</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 EventHub. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
   <script src="js/chatbot.js"></script>
 </body>
 </html>
