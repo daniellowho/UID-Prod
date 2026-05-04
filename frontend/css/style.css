@@ -711,6 +711,14 @@ body {
   transform: scale(1.05);
 }
 
+.event-header .event-category-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  position: relative;
+  z-index: 1;
+}
+
 .event-header {
   background: linear-gradient(135deg, #0a84ff 0%, #bf5af2 100%);
   color: white;
@@ -1538,25 +1546,6 @@ body {
 
 @keyframes spin {
   to { transform: translate(-50%, -90px) rotate(360deg); }
-}
-
-.footer {
-  background: #000000;
-  color: rgba(245, 245, 247, 0.6);
-  padding: 36px 0;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.footer::before {
-  content: none;
-}
-
-.footer p {
-  font-size: 0.85rem;
-  letter-spacing: -0.01em;
 }
 
 .toast {

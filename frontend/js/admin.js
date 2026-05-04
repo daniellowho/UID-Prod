@@ -94,7 +94,12 @@ function setupEventForms() {
         title: document.getElementById('eventTitle').value.trim(),
         date: document.getElementById('eventDate').value,
         location: document.getElementById('eventLocation').value.trim(),
-        description: document.getElementById('eventDescription').value.trim()
+        description: document.getElementById('eventDescription').value.trim(),
+        start_time: document.getElementById('eventTime').value || '09:00',
+        category: document.getElementById('eventCategory').value || null,
+        max_capacity: document.getElementById('eventCapacity').value
+          ? parseInt(document.getElementById('eventCapacity').value, 10)
+          : null
       };
 
       try {
@@ -123,7 +128,12 @@ function setupEventForms() {
         title: document.getElementById('editEventTitle').value.trim(),
         date: document.getElementById('editEventDate').value,
         location: document.getElementById('editEventLocation').value.trim(),
-        description: document.getElementById('editEventDescription').value.trim()
+        description: document.getElementById('editEventDescription').value.trim(),
+        start_time: document.getElementById('editEventTime').value || '09:00',
+        category: document.getElementById('editEventCategory').value || null,
+        max_capacity: document.getElementById('editEventCapacity').value
+          ? parseInt(document.getElementById('editEventCapacity').value, 10)
+          : null
       };
 
       try {
@@ -362,6 +372,11 @@ async function editEvent(eventId) {
     document.getElementById('editEventDate').value = event.date.split('T')[0];
     document.getElementById('editEventLocation').value = event.location || '';
     document.getElementById('editEventDescription').value = event.description || '';
+    document.getElementById('editEventTime').value = event.start_time
+      ? event.start_time.substring(0, 5)
+      : '09:00';
+    document.getElementById('editEventCategory').value = event.category || '';
+    document.getElementById('editEventCapacity').value = event.max_capacity || '';
 
     document.getElementById('editEventModal').style.display = 'flex';
   } catch (error) {

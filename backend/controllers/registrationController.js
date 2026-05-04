@@ -13,6 +13,19 @@ const registerForEvent = async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
+    const event = events[0];
+
+    // Enforce capacity limit
+    if (event.max_capacity) {
+      const [countRows] = await pool.query(
+        'SELECT COUNT(*) as cnt FROM registrations WHERE event_id = ? AND status = ?',
+        [eventId, 'approved']
+      );
+      if (countRows[0].cnt >= event.max_capacity) {
+        return res.status(400).json({ error: 'This event has reached its maximum capacity' });
+      }
+    }
+
     const [existing] = await pool.query(
       'SELECT * FROM registrations WHERE user_id = ? AND event_id = ?',
       [userId, eventId]
