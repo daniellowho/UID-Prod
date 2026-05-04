@@ -87,12 +87,12 @@ const sendEventReminder = async ({ to, userName, eventTitle, eventDate, eventLoc
   const transporter = createTransporter();
 
   let urgencyText, urgencyColor, emoji;
-  if (minutesLeft <= 2) {
-    urgencyText = '🔴 Join Now! Event starts in 2 minutes!';
+  if (minutesLeft <= 5) {
+    urgencyText = '🔴 Join Now! Event starts in 5 minutes!';
     urgencyColor = '#ef4444';
     emoji = '🚨';
-  } else if (minutesLeft <= 10) {
-    urgencyText = '🟠 10 minutes left — get ready!';
+  } else if (minutesLeft <= 15) {
+    urgencyText = '🟠 15 minutes to go — get ready!';
     urgencyColor = '#f59e0b';
     emoji = '⏰';
   } else {
@@ -120,7 +120,7 @@ const sendEventReminder = async ({ to, userName, eventTitle, eventDate, eventLoc
       </td></tr>
     </table>
 
-    ${minutesLeft <= 2 ? `<div style="text-align:center;margin-bottom:16px;">
+    ${minutesLeft <= 5 ? `<div style="text-align:center;margin-bottom:16px;">
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance/user-qr.html" style="display:inline-block;background:#ef4444;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:14px 32px;border-radius:10px;">🚀 Open My QR Pass Now</a>
     </div>` : `<div style="text-align:center;margin-bottom:16px;">
       <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/attendance/user-qr.html" style="display:inline-block;background:#6366f1;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 28px;border-radius:10px;">🎟️ View My QR Pass</a>
@@ -130,12 +130,12 @@ const sendEventReminder = async ({ to, userName, eventTitle, eventDate, eventLoc
     () => transporter.sendMail({
       from: FROM_ADDRESS,
       to,
-      subject: `${emoji} ${minutesLeft <= 2 ? 'JOIN NOW!' : `${minutesLeft} mins left –`} ${eventTitle}`,
+      subject: `${emoji} ${minutesLeft <= 5 ? 'JOIN NOW!' : `${minutesLeft} mins to go –`} ${eventTitle}`,
       html: emailWrapper(body)
     }),
     {
       recipientEmail: to, recipientName: userName,
-      subject: `${emoji} ${minutesLeft <= 2 ? 'JOIN NOW!' : `${minutesLeft} mins left –`} ${eventTitle}`,
+      subject: `${emoji} ${minutesLeft <= 5 ? 'JOIN NOW!' : `${minutesLeft} mins to go –`} ${eventTitle}`,
       emailType: 'reminder'
     }
   );
