@@ -73,9 +73,14 @@ const updateEvent = async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-    const capacityVal = max_capacity !== undefined
-      ? (max_capacity === '' || max_capacity === null ? null : parseInt(max_capacity, 10))
-      : existing[0].max_capacity;
+    let capacityVal;
+    if (max_capacity === undefined) {
+      capacityVal = existing[0].max_capacity;
+    } else if (max_capacity === '' || max_capacity === null) {
+      capacityVal = null;
+    } else {
+      capacityVal = parseInt(max_capacity, 10);
+    }
 
     await pool.query(
       'UPDATE events SET title = ?, description = ?, date = ?, location = ?, start_time = ?, category = ?, max_capacity = ? WHERE id = ?',

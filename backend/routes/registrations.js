@@ -12,7 +12,15 @@ const registrationStatusLimiter = rateLimit({
   message: { error: 'Too many registration status updates, please slow down.' }
 });
 
-router.post('/events/:eventId/register', authenticate, registerForEvent);
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many registration attempts, please try again later.' }
+});
+
+router.post('/events/:eventId/register', authenticate, registerLimiter, registerForEvent);
 router.get('/my', authenticate, getUserRegistrations);
 router.delete('/events/:eventId/cancel', authenticate, cancelRegistration);
 router.get('/events/:eventId', authenticate, isAdmin, getEventRegistrations);
