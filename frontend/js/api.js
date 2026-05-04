@@ -110,3 +110,17 @@ const AdminAPI = {
     body: JSON.stringify(payload)
   })
 };
+
+const FeedbackAPI = {
+  getTopics: () => apiRequest('/feedback/topics'),
+
+  getAll: (topic) => {
+    const query = topic && topic !== 'all' ? `?topic=${encodeURIComponent(topic)}` : '';
+    return apiRequest(`/feedback${query}`);
+  },
+
+  submit: (data) => apiRequest('/feedback', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+};
