@@ -101,5 +101,12 @@ const RegistrationsAPI = {
 const AdminAPI = {
   getAnalytics: () => apiRequest('/admin/analytics'),
 
-  getUsers: () => apiRequest('/admin/users')
+  getUsers: () => apiRequest('/admin/users'),
+
+  getEmailLogs: () => apiRequest('/admin/email/logs'),
+
+  sendEmail: (payload) => apiRequest('/admin/email/send', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
 };

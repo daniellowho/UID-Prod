@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAdminAuth();
   setupTabs();
   setupEventForms();
+  setupEmailForm();
   setupLogout();
   loadAdminData();
   setupThemeToggle();
@@ -72,6 +73,8 @@ function setupTabs() {
         content.classList.add('active');
         content.style.animation = 'fadeIn 0.3s ease';
       }
+
+      if (tabName === 'emails') loadEmailLogs();
     });
   });
 }
@@ -155,7 +158,9 @@ async function loadAdminData() {
     loadAnalytics(),
     loadEvents(),
     loadRequests(),
-    loadUsers()
+    loadUsers(),
+    loadEmailLogs(),
+    populateUserDropdown()
   ]);
 }
 
@@ -481,3 +486,124 @@ function escapeHtml(text) {
 }
 
 document.getElementById('statusFilter')?.addEventListener('change', loadRequests);
+
+// ─── Email Management ─────────────────────────────────────────────────────────
+
+let _allUsers = [];
+
+async function loadEmailLogs() {
+  const container = document.getElementById('emailLogsList');
+  if (!container) return;
+
+  try {
+    const logs = await AdminAPI.getEmailLogs();
+    const typeFilter = document.getElementById('emailTypeFilter')?.value || 'all';
+    const statusFilter = document.getElementById('emailStatusFilter')?.value || 'all';
+
+    let filtered = logs;
+    if (typeFilter !== 'all') filtered = filtered.filter(l => l.email_type === typeFilter);
+    if (statusFilter !== 'all') filtered = filtered.filter(l => l.status === statusFilter);
+
+    if (!filtered || filtered.length === 0) {
+      container.innerHTML = '<p class="no-events">No email records found.</p>';
+      return;
+    }
+
+    const typeLabels = {
+      welcome: '👋 Welcome',
+      qr_code: '🎟️ QR Pass',
+      reminder: '⏰ Reminder',
+      thank_you: '🎊 Thank You',
+      custom: '📬 Custom'
+    };
+
+    container.innerHTML = `
+      <div class="email-log-header" style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1.5fr;gap:8px;padding:10px 16px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border-color);">
+        <div>Recipient</div>
+        <div>Subject</div>
+        <div>Type</div>
+        <div>Status</div>
+        <div>Sent At</div>
+      </div>
+      ${filtered.map((log, index) => `
+        <div class="email-log-item" style="display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1.5fr;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-color);font-size:14px;animation-delay:${index * 0.03}s;" title="${log.error_message ? escapeHtml(log.error_message) : ''}">
+          <div>
+            <div style="font-weight:600;color:var(--text-primary);">${escapeHtml(log.recipient_name || '—')}</div>
+            <div style="font-size:12px;color:var(--text-secondary);">${escapeHtml(log.recipient_email)}</div>
+          </div>
+          <div style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(log.subject || '')}">${escapeHtml(log.subject || '—')}</div>
+          <div><span style="background:var(--card-bg);border:1px solid var(--border-color);padding:2px 8px;border-radius:99px;font-size:12px;white-space:nowrap;">${typeLabels[log.email_type] || log.email_type}</span></div>
+          <div><span style="color:${log.status === 'sent' ? 'var(--success-color)' : 'var(--danger-color)'};font-weight:700;">${log.status === 'sent' ? '✓ Sent' : '✗ Failed'}</span></div>
+          <div style="color:var(--text-secondary);font-size:12px;">${new Date(log.sent_at).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+        </div>
+      `).join('')}
+    `;
+  } catch (error) {
+    console.error('Failed to load email logs:', error);
+    if (container) container.innerHTML = '<p class="no-events">Failed to load email logs.</p>';
+  }
+}
+
+async function populateUserDropdown() {
+  try {
+    if (_allUsers.length === 0) {
+      _allUsers = await AdminAPI.getUsers();
+    }
+    const select = document.getElementById('emailRecipients');
+    if (!select) return;
+
+    // Preserve first "All Users" option
+    select.innerHTML = '<option value="all">All Users</option>';
+    _allUsers.forEach(user => {
+      const opt = document.createElement('option');
+      opt.value = user.id;
+      opt.textContent = `${user.name} (${user.email})`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to populate user dropdown:', err);
+  }
+}
+
+function openComposeModal() {
+  populateUserDropdown();
+  document.getElementById('composeEmailForm')?.reset();
+  document.getElementById('composeEmailModal').style.display = 'flex';
+}
+
+function setupEmailForm() {
+  const form = document.getElementById('composeEmailForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('sendEmailBtn');
+    btn.disabled = true;
+    btn.innerHTML = 'Sending…';
+
+    const recipientValue = document.getElementById('emailRecipients').value;
+    const subject = document.getElementById('emailSubject').value.trim();
+    const message = document.getElementById('emailMessage').value.trim();
+
+    const payload = {
+      recipients: recipientValue === 'all' ? 'all' : [parseInt(recipientValue, 10)],
+      subject,
+      message
+    };
+
+    try {
+      const result = await AdminAPI.sendEmail(payload);
+      closeModal('composeEmailModal');
+      showAlert('Email Sent', result.message, 'success');
+      loadEmailLogs();
+    } catch (error) {
+      showAlert('Error', error.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Send Email';
+    }
+  });
+}
+
+document.getElementById('emailTypeFilter')?.addEventListener('change', loadEmailLogs);
+document.getElementById('emailStatusFilter')?.addEventListener('change', loadEmailLogs);

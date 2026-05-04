@@ -2245,3 +2245,38 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ─── Email log table ─────────────────────────────────────────────────────── */
+.email-log-header {
+  background: var(--card-bg);
+  border-radius: 8px 8px 0 0;
+  border: 1px solid var(--border-color);
+}
+
+.email-log-item {
+  background: var(--card-bg);
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
+  transition: background 0.15s ease;
+}
+
+.email-log-item:hover {
+  background: var(--hover-bg, rgba(99,102,241,0.04));
+}
+
+.email-log-item:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
+@media (max-width: 640px) {
+  .email-log-header,
+  .email-log-item {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .email-log-header > div:nth-child(3),
+  .email-log-header > div:nth-child(5),
+  .email-log-item > div:nth-child(3),
+  .email-log-item > div:nth-child(5) {
+    display: none;
+  }
+}
