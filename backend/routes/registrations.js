@@ -12,11 +12,28 @@ const registrationStatusLimiter = rateLimit({
   message: { error: 'Too many registration status updates, please slow down.' }
 });
 
-router.post('/events/:eventId/register', authenticate, registerForEvent);
-router.get('/my', authenticate, getUserRegistrations);
-router.delete('/events/:eventId/cancel', authenticate, cancelRegistration);
-router.get('/events/:eventId', authenticate, isAdmin, getEventRegistrations);
-router.put('/:registrationId/status', authenticate, isAdmin, registrationStatusLimiter, updateRegistrationStatus);
-router.get('/', authenticate, isAdmin, getAllRegistrations);
+const registerLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many registration attempts, please try again later.' }
+});
+
+const readLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please slow down.' }
+});
+
+// Rate limiters placed before authenticate so unauthenticated traffic is also throttled
+router.post('/events/:eventId/register', registerLimiter, authenticate, registerForEvent);
+router.get('/my', readLimiter, authenticate, getUserRegistrations);
+router.delete('/events/:eventId/cancel', readLimiter, authenticate, cancelRegistration);
+router.get('/events/:eventId', readLimiter, authenticate, isAdmin, getEventRegistrations);
+router.put('/:registrationId/status', registrationStatusLimiter, authenticate, isAdmin, updateRegistrationStatus);
+router.get('/', readLimiter, authenticate, isAdmin, getAllRegistrations);
 
 module.exports = router;

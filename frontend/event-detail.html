@@ -167,7 +167,32 @@
 
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2026 EventHub. All rights reserved.</p>
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">EventHub</div>
+          <p>Discover, register, and attend amazing events. Your next great experience is just a click away.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Account</h4>
+          <ul>
+            <li><a href="user-dashboard.html">Dashboard</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            <li><a href="attendance/user-qr.html">My QR Pass</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 EventHub. All rights reserved.</p>
+      </div>
     </div>
   </footer>
 
@@ -261,6 +286,8 @@
           ? formatTime(ev.start_time)
           : 'Time TBD';
 
+        const isFull = ev.max_capacity && (ev.participants_count || 0) >= ev.max_capacity;
+
         content.innerHTML = `
           <a class="detail-back" href="events.html">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -269,6 +296,8 @@
             </svg>
             Back to Events
           </a>
+
+          ${ev.category ? `<span class="event-category-badge category-${ev.category}" style="margin-bottom:12px;display:inline-block;">${categoryLabel(ev.category)}</span>` : ''}
 
           <h1 class="detail-title">${escapeHtml(ev.title)}</h1>
 
@@ -286,8 +315,8 @@
               <span class="detail-info-value">${escapeHtml(ev.location || 'TBD')}</span>
             </div>
             <div class="detail-info-item">
-              <span class="detail-info-label">👥 Participants</span>
-              <span class="detail-info-value">${ev.participants_count || 0} registered</span>
+              <span class="detail-info-label">👥 Registered</span>
+              <span class="detail-info-value">${ev.participants_count || 0}${ev.max_capacity ? ' / ' + ev.max_capacity : ''}</span>
             </div>
             ${ev.created_by_name ? `
             <div class="detail-info-item">
@@ -296,25 +325,40 @@
             </div>` : ''}
           </div>
 
+          ${ev.max_capacity ? capacityBarHtml(ev.participants_count || 0, ev.max_capacity) : ''}
+
           <div class="detail-description-card">
             <h2>About this Event</h2>
             <p>${escapeHtml(ev.description || 'No description provided.')}</p>
           </div>
 
           <div class="detail-actions">
-            <button class="btn btn-primary" id="detailRegisterBtn">Register for this Event</button>
+            ${isFull
+              ? `<button class="btn btn-danger" disabled>Event Full</button>`
+              : `<button class="btn btn-primary" id="detailRegisterBtn">Register for this Event</button>`
+            }
             <a href="events.html" class="btn btn-secondary">Browse More Events</a>
+            <button class="btn btn-share" id="shareBtn" onclick="shareEvent('${escapeHtml(ev.title)}')">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              Share
+            </button>
           </div>
         `;
 
-        document.getElementById('detailRegisterBtn').addEventListener('click', () => {
-          const token = localStorage.getItem('token');
-          if (!token) {
-            window.location.href = `login.html?redirect=event-detail.html?id=${id}`;
-            return;
-          }
-          registerForEvent(ev.id);
-        });
+        if (!isFull) {
+          document.getElementById('detailRegisterBtn').addEventListener('click', () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+              window.location.href = `login.html?redirect=event-detail.html?id=${id}`;
+              return;
+            }
+            registerForEvent(ev.id);
+          });
+        }
 
       } catch (err) {
         console.error('Failed to load event:', err);
@@ -347,6 +391,42 @@
         btn.disabled = false;
         btn.textContent = 'Register for this Event';
         showToast(err.message, 'error');
+      }
+    }
+
+    function categoryLabel(cat) {
+      const labels = {
+        conference: 'Conference', workshop: 'Workshop', hackathon: 'Hackathon',
+        seminar: 'Seminar', networking: 'Networking', other: 'Other'
+      };
+      return labels[cat] || cat;
+    }
+
+    function capacityBarHtml(approved, capacity) {
+      const pct = Math.min(Math.round((approved / capacity) * 100), 100);
+      const fillClass = pct >= 90 ? 'full' : pct >= 70 ? 'near-full' : '';
+      return `
+        <div class="capacity-bar-wrapper" style="margin-bottom:24px;">
+          <div class="capacity-bar-label">
+            <span>Capacity</span>
+            <span>${approved} / ${capacity} spots filled</span>
+          </div>
+          <div class="capacity-bar">
+            <div class="capacity-bar-fill ${fillClass}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    }
+
+    function shareEvent(title) {
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('Link copied to clipboard!', 'success');
+        }).catch(() => {
+          showToast('Copy this link: ' + url, 'warning');
+        });
       }
     }
 

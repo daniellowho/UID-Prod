@@ -92,6 +92,24 @@ const initDatabase = async () => {
       }
     }
 
+    // Add category column to events if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE events ADD COLUMN category VARCHAR(50) DEFAULT NULL`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding category column:', err.message);
+      }
+    }
+
+    // Add max_capacity column to events if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE events ADD COLUMN max_capacity INT DEFAULT NULL`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding max_capacity column:', err.message);
+      }
+    }
+
     // Add github_id column to users if it doesn't exist yet
     try {
       await connection.query(`ALTER TABLE users ADD COLUMN github_id VARCHAR(255)`);
