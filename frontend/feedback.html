@@ -543,21 +543,27 @@
       document.getElementById('submitBtn').addEventListener('click', submitFeedback);
     });
 
-    async function loadTopics() {
-      try {
-        const { topics } = await FeedbackAPI.getTopics();
-        const topicSelect = document.getElementById('topicSelect');
-        const filterSelect = document.getElementById('filterSelect');
+    const FALLBACK_TOPICS = ['General', 'Website Experience', 'Event Organization', 'Support'];
 
-        topicSelect.innerHTML = '<option value="">Select a topic…</option>';
-        topics.forEach(t => {
-          topicSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`;
-          filterSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`;
-        });
+    async function loadTopics() {
+      let topics = FALLBACK_TOPICS;
+      try {
+        const data = await FeedbackAPI.getTopics();
+        if (data && Array.isArray(data.topics) && data.topics.length > 0) {
+          topics = data.topics;
+        }
       } catch (err) {
         console.error('Failed to load topics:', err);
-        document.getElementById('topicSelect').innerHTML = '<option value="">Failed to load topics</option>';
       }
+
+      const topicSelect = document.getElementById('topicSelect');
+      const filterSelect = document.getElementById('filterSelect');
+
+      topicSelect.innerHTML = '<option value="">Select a topic…</option>';
+      topics.forEach(t => {
+        topicSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`;
+        filterSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`;
+      });
     }
 
     async function loadReviews(topic) {
