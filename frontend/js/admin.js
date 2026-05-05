@@ -1,3 +1,5 @@
+let allAdminEvents = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   checkAdminAuth();
   setupTabs();
@@ -236,18 +238,22 @@ function animateNumber(elementId, target) {
 async function loadEvents() {
   try {
     const events = await EventsAPI.getAll();
+    allAdminEvents = events || [];
     const container = document.getElementById('adminEventsList');
 
-    if (!events || events.length === 0) {
+    if (!allAdminEvents || allAdminEvents.length === 0) {
       container.innerHTML = '<p class="no-events">No events created yet.</p>';
       return;
     }
 
-    container.innerHTML = events.map((event, index) => `
+    // Sort events: upcoming first (by date ascending), then past events
+    const sortedEvents = [...allAdminEvents].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    container.innerHTML = sortedEvents.map((event, index) => `
       <div class="admin-event-item" style="animation-delay: ${index * 0.05}s">
         <div class="admin-event-info">
           <h4>${escapeHtml(event.title)}</h4>
-          <p>${formatDate(event.date)} • ${escapeHtml(event.location || 'TBD')}</p>
+          <p>${formatDate(event.date)} • ${escapeHtml(event.location || 'TBD')}${new Date(event.date) < new Date() ? ' <span style="color: var(--text-secondary); font-size: 0.8rem; background: rgba(107,114,128,0.15); padding: 2px 8px; border-radius: 4px; margin-left: 8px;">Completed</span>' : ' <span style="color: var(--success-color); font-size: 0.8rem; background: rgba(16,185,129,0.15); padding: 2px 8px; border-radius: 4px; margin-left: 8px;">Upcoming</span>'}</p>
         </div>
         <div class="admin-event-actions">
           <button class="btn btn-warning btn-sm" onclick="editEvent(${event.id})">
@@ -259,6 +265,9 @@ async function loadEvents() {
         </div>
       </div>
     `).join('');
+
+    // Populate event filter dropdown
+    populateEventFilter(allAdminEvents);
   } catch (error) {
     console.error('Failed to load events:', error);
   }
@@ -269,10 +278,14 @@ async function loadRequests() {
     const registrations = await RegistrationsAPI.getAll();
     const container = document.getElementById('requestsList');
     const statusFilter = document.getElementById('statusFilter').value;
+    const eventFilter = document.getElementById('eventFilter').value;
 
     let filtered = registrations;
     if (statusFilter !== 'all') {
-      filtered = registrations.filter(r => r.status === statusFilter);
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
+    if (eventFilter !== 'all') {
+      filtered = filtered.filter(r => String(r.event_id) === eventFilter);
     }
 
     if (!filtered || filtered.length === 0) {
@@ -482,3 +495,25 @@ function escapeHtml(text) {
 }
 
 document.getElementById('statusFilter')?.addEventListener('change', loadRequests);
+document.getElementById('eventFilter')?.addEventListener('change', loadRequests);
+
+function populateEventFilter(events) {
+  const eventFilter = document.getElementById('eventFilter');
+  if (!eventFilter) return;
+
+  const currentValue = eventFilter.value;
+  eventFilter.innerHTML = '<option value="all">All Events</option>';
+  
+  const sortedEvents = [...events].sort((a, b) => new Date(b.date) - new Date(a.date));
+  sortedEvents.forEach(event => {
+    const option = document.createElement('option');
+    option.value = event.id;
+    option.textContent = `${event.title} (${formatDate(event.date)})`;
+    eventFilter.appendChild(option);
+  });
+
+  // Restore the previously selected value if it still exists
+  if (currentValue && eventFilter.querySelector(`option[value="${currentValue}"]`)) {
+    eventFilter.value = currentValue;
+  }
+}
