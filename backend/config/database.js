@@ -1,10 +1,13 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-const DEFAULT_DB_NAME = 'event_management';
-const DEFAULT_DB_HOST = 'localhost';
-const DEFAULT_DB_USER = 'root';
-const DEFAULT_DB_PASSWORD = '';
+const connection = mysql.createConnection({
+  host: process.env.MYSQLHOST,
+  port: process.env.MYSQLPORT,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE
+});
 
 const getDatabaseUrl = () => process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
 
