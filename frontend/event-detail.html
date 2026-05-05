@@ -276,7 +276,7 @@
         const ev = await EventsAPI.getById(id);
 
         const defaultImage = 'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?w=1200&h=400&fit=crop';
-        heroImg.src = ev.image_url || defaultImage;
+        heroImg.src = resolveMediaUrl(ev.image_url) || defaultImage;
         heroImg.alt = escapeHtml(ev.title);
 
         const formattedDate = new Date(ev.date).toLocaleDateString('en-US', {
@@ -459,4 +459,3 @@
   <script src="js/chatbot.js"></script>
 </body>
 </html>
-
