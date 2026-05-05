@@ -200,7 +200,7 @@ function displayUpcomingEvents(allEvents, userRegistrations) {
 
     return `
       <div class="mini-event-card" style="animation-delay: ${index * 0.1}s">
-        <img src="${event.image_url || defaultImages[event.id % defaultImages.length]}"
+        <img src="${resolveMediaUrl(event.image_url) || defaultImages[event.id % defaultImages.length]}"
              alt="${escapeHtml(event.title)}"
              style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;"
              onerror="this.src='${defaultImages[event.id % defaultImages.length]}'">
