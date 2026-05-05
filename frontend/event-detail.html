@@ -319,6 +319,11 @@
               <span class="detail-info-label">👥 Registered</span>
               <span class="detail-info-value">${ev.participants_count || 0}${ev.max_capacity ? ' / ' + ev.max_capacity : ''}</span>
             </div>
+            ${ev.speaker ? `
+            <div class="detail-info-item">
+              <span class="detail-info-label">🎤 Speaker</span>
+              <span class="detail-info-value">${escapeHtml(ev.speaker)}</span>
+            </div>` : ''}
             ${ev.created_by_name ? `
             <div class="detail-info-item">
               <span class="detail-info-label">🏷️ Organized by</span>

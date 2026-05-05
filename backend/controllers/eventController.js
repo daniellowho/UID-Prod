@@ -39,7 +39,7 @@ const getEventById = async (req, res) => {
 
 const createEvent = async (req, res) => {
   try {
-    const { title, description, date, location, start_time, category, max_capacity } = req.body;
+    const { title, description, date, location, start_time, category, max_capacity, speaker } = req.body;
     const created_by = req.user.id;
 
     if (!title || !date) {
@@ -49,8 +49,8 @@ const createEvent = async (req, res) => {
     const capacityVal = max_capacity ? parseInt(max_capacity, 10) : null;
 
     const [result] = await pool.query(
-      'INSERT INTO events (title, description, date, location, start_time, category, max_capacity, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description, date, location, start_time || '09:00:00', category || null, capacityVal, created_by]
+      'INSERT INTO events (title, description, date, location, start_time, category, max_capacity, speaker, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, description, date, location, start_time || '09:00:00', category || null, capacityVal, speaker || null, created_by]
     );
 
     res.status(201).json({
@@ -66,7 +66,7 @@ const createEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, date, location, start_time, category, max_capacity } = req.body;
+    const { title, description, date, location, start_time, category, max_capacity, speaker } = req.body;
 
     const [existing] = await pool.query('SELECT * FROM events WHERE id = ?', [id]);
     if (existing.length === 0) {
@@ -83,7 +83,7 @@ const updateEvent = async (req, res) => {
     }
 
     await pool.query(
-      'UPDATE events SET title = ?, description = ?, date = ?, location = ?, start_time = ?, category = ?, max_capacity = ? WHERE id = ?',
+      'UPDATE events SET title = ?, description = ?, date = ?, location = ?, start_time = ?, category = ?, max_capacity = ?, speaker = ? WHERE id = ?',
       [
         title || existing[0].title,
         description !== undefined ? description : existing[0].description,
@@ -92,6 +92,7 @@ const updateEvent = async (req, res) => {
         start_time || existing[0].start_time,
         category !== undefined ? (category || null) : existing[0].category,
         capacityVal,
+        speaker !== undefined ? (speaker || null) : existing[0].speaker,
         id
       ]
     );
