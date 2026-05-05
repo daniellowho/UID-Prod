@@ -22,6 +22,8 @@ const feedbackSubmitLimiter = rateLimit({
 
 router.get('/topics', feedbackLimiter, getTopics);
 router.get('/', feedbackLimiter, getFeedback);
+// isAuthenticated is optional auth — it sets req.user from the JWT if present,
+// but always calls next(), so anonymous users (req.user = null) are allowed.
 router.post('/', feedbackSubmitLimiter, isAuthenticated, createFeedback);
 
 module.exports = router;
