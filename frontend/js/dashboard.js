@@ -185,21 +185,37 @@ function displayUpcomingEvents(allEvents, userRegistrations) {
     return;
   }
 
-    container.innerHTML = upcomingEvents.slice(0, 5).map((event, index) => `
+  container.innerHTML = upcomingEvents.slice(0, 5).map((event, index) => {
+    const capacity = event.max_capacity;
+    const approved = event.participants_count || 0;
+    const isFull = capacity && approved >= capacity;
+
+    const categoryLabels = {
+      conference: 'Conference', workshop: 'Workshop', hackathon: 'Hackathon',
+      seminar: 'Seminar', networking: 'Networking', other: 'Other'
+    };
+    const categoryBadge = event.category
+      ? `<span class="event-category-badge category-${event.category}" style="font-size:0.65rem;padding:2px 8px;margin-bottom:4px;display:inline-block;">${categoryLabels[event.category] || event.category}</span>`
+      : '';
+
+    return `
       <div class="mini-event-card" style="animation-delay: ${index * 0.1}s">
-        <img src="${event.image_url || defaultImages[event.id % defaultImages.length]}" 
-             alt="${escapeHtml(event.title)}" 
-             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;"
+        <img src="${event.image_url || defaultImages[event.id % defaultImages.length]}"
+             alt="${escapeHtml(event.title)}"
+             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; flex-shrink: 0;"
              onerror="this.src='${defaultImages[event.id % defaultImages.length]}'">
-        <div class="mini-event-info">
+        <div class="mini-event-info" style="flex:1;min-width:0;">
+          ${categoryBadge}
           <h4>${escapeHtml(event.title)}</h4>
           <p>${formatDate(event.date)}</p>
         </div>
-        <button class="btn btn-primary btn-sm" onclick="registerForEvent(${event.id})">
-          Register
-        </button>
+        ${isFull
+          ? `<span class="event-full-badge" style="flex-shrink:0;">Full</span>`
+          : `<button class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="registerForEvent(${event.id})">Register</button>`
+        }
       </div>
-    `).join('');
+    `;
+  }).join('');
 
   animateListItems(container);
 }

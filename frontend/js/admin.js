@@ -258,22 +258,41 @@ async function loadEvents() {
       return;
     }
 
-    container.innerHTML = events.map((event, index) => `
-      <div class="admin-event-item" style="animation-delay: ${index * 0.05}s">
-        <div class="admin-event-info">
-          <h4>${escapeHtml(event.title)}</h4>
-          <p>${formatDate(event.date)} • ${escapeHtml(event.location || 'TBD')}</p>
+    container.innerHTML = events.map((event, index) => {
+      const categoryLabels = {
+        conference: 'Conference', workshop: 'Workshop', hackathon: 'Hackathon',
+        seminar: 'Seminar', networking: 'Networking', other: 'Other'
+      };
+      const categoryBadge = event.category
+        ? `<span class="event-category-badge category-${event.category}" style="font-size:0.65rem;padding:2px 8px;margin-right:8px;">${categoryLabels[event.category] || event.category}</span>`
+        : '';
+      const capacity = event.max_capacity;
+      const approved = event.participants_count || 0;
+      const isFull = capacity && approved >= capacity;
+      const capacityLabel = capacity
+        ? `<span style="font-size:0.8rem;color:${isFull ? 'var(--danger-color)' : 'var(--text-secondary)'};">${approved}/${capacity} seats${isFull ? ' · Full' : ''}</span>`
+        : '';
+
+      return `
+        <div class="admin-event-item" style="animation-delay: ${index * 0.05}s">
+          <div class="admin-event-info">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+              ${categoryBadge}
+              <h4 style="margin:0;">${escapeHtml(event.title)}</h4>
+            </div>
+            <p style="margin:0;">${formatDate(event.date)}${event.start_time ? ' · ' + formatTime(event.start_time) : ''} · ${escapeHtml(event.location || 'TBD')} ${capacityLabel}</p>
+          </div>
+          <div class="admin-event-actions">
+            <button class="btn btn-warning btn-sm" onclick="editEvent(${event.id})">
+              Edit
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="deleteEvent(${event.id})">
+              Delete
+            </button>
+          </div>
         </div>
-        <div class="admin-event-actions">
-          <button class="btn btn-warning btn-sm" onclick="editEvent(${event.id})">
-            Edit
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="deleteEvent(${event.id})">
-            Delete
-          </button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } catch (error) {
     console.error('Failed to load events:', error);
   }
@@ -487,6 +506,14 @@ function showToast(message, type) {
     toast.classList.remove('show');
     setTimeout(() => toast.remove(), 300);
   }, 3000);
+}
+
+function formatTime(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
 function formatDate(dateString) {
