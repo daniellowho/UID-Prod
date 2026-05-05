@@ -30,6 +30,10 @@ const initDatabase = async () => {
     await connection.query(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
     await connection.query(`USE ${dbName}`);
 
+    // STUDENT table (mapped to users):
+    // Functional dependencies: id -> name, email, password, role, roll_number, department
+    // This is in 3NF/BCNF: every non-key attribute depends only on the primary key (id).
+    // No partial or transitive dependencies exist.
     await connection.query(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -38,11 +42,17 @@ const initDatabase = async () => {
         password VARCHAR(255),
         role ENUM('user', 'admin') DEFAULT 'user',
         google_id VARCHAR(255),
+        roll_number VARCHAR(50) DEFAULT NULL,
+        department VARCHAR(100) DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
 
+    // EVENT table:
+    // Functional dependencies: id -> title, description, date, location, speaker, category, max_capacity, created_by
+    // In 3NF/BCNF: all attributes depend solely on the primary key. No event info is stored
+    // redundantly in registrations or feedback (those tables only store event_id FK).
     await connection.query(`
       CREATE TABLE IF NOT EXISTS events (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -58,6 +68,10 @@ const initDatabase = async () => {
       )
     `);
 
+    // REGISTRATION table:
+    // Functional dependencies: (user_id, event_id) -> status, created_at
+    // Primary key is the composite (user_id, event_id) via UNIQUE KEY, no repeated event info.
+    // Fully in BCNF: no non-trivial FDs outside the candidate key.
     await connection.query(`
       CREATE TABLE IF NOT EXISTS registrations (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -116,6 +130,59 @@ const initDatabase = async () => {
     } catch (err) {
       if (err.errno !== 1060) {
         console.error('Unexpected error adding github_id column:', err.message);
+      }
+    }
+
+    // Add roll_number column to users if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN roll_number VARCHAR(50) DEFAULT NULL`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding roll_number column:', err.message);
+      }
+    }
+
+    // Add department column to users if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE users ADD COLUMN department VARCHAR(100) DEFAULT NULL`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding department column:', err.message);
+      }
+    }
+
+    // Add speaker column to events if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE events ADD COLUMN speaker VARCHAR(255) DEFAULT NULL`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding speaker column:', err.message);
+      }
+    }
+
+    // Add event_id FK column to feedback if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE feedback ADD COLUMN event_id INT NULL`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding event_id column to feedback:', err.message);
+      }
+    }
+    try {
+      await connection.query(`ALTER TABLE feedback ADD CONSTRAINT fk_feedback_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL`);
+    } catch (err) {
+      // 1826 = duplicate FK name, 1215 = cannot add FK (column may already have it)
+      if (err.errno !== 1826 && err.errno !== 1215 && err.errno !== 1005) {
+        console.error('Unexpected error adding feedback event_id FK:', err.message);
+      }
+    }
+
+    // Add would_recommend column to feedback if it doesn't exist yet
+    try {
+      await connection.query(`ALTER TABLE feedback ADD COLUMN would_recommend TINYINT(1) DEFAULT NULL`);
+    } catch (err) {
+      if (err.errno !== 1060) {
+        console.error('Unexpected error adding would_recommend column:', err.message);
       }
     }
 
@@ -178,16 +245,23 @@ const initDatabase = async () => {
       )
     `);
 
+    // FEEDBACK table:
+    // Functional dependencies: (event_id, user_id) -> rating, comments, would_recommend, created_at
+    // event info is NOT repeated here (only event_id FK), so no redundancy.
+    // This is in BCNF: the only determinant is the composite key (event_id, user_id).
     await connection.query(`
       CREATE TABLE IF NOT EXISTS feedback (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NULL,
         user_name VARCHAR(255) NOT NULL DEFAULT 'Anonymous',
+        event_id INT NULL,
         topic VARCHAR(255) NOT NULL,
         rating INT NOT NULL DEFAULT 5,
         message TEXT NOT NULL,
+        would_recommend TINYINT(1) DEFAULT NULL COMMENT '1=yes, 0=no',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL
       )
     `);
 

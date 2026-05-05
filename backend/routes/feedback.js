@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { getTopics, getFeedback, createFeedback } = require('../controllers/feedbackController');
-const { isAuthenticated } = require('../middleware/auth');
+const { getTopics, getFeedback, createFeedback, getMyAttendedEvents } = require('../controllers/feedbackController');
+const { isAuthenticated, requireAuth } = require('../middleware/auth');
 
 const feedbackLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -21,6 +21,7 @@ const feedbackSubmitLimiter = rateLimit({
 });
 
 router.get('/topics', feedbackLimiter, getTopics);
+router.get('/my-events', requireAuth, getMyAttendedEvents);
 router.get('/', feedbackLimiter, getFeedback);
 // isAuthenticated is optional auth — it sets req.user from the JWT if present,
 // but always calls next(), so anonymous users (req.user = null) are allowed.

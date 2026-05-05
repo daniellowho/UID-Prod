@@ -122,6 +122,30 @@
           <h2>Event Participation</h2>
           <div id="eventParticipation" class="event-participation-list"></div>
         </div>
+
+        <!-- Bar chart: registrations per event (CSS heights) -->
+        <div class="event-stats-section" style="margin-top:40px;">
+          <h2>Registrations per Event <span style="font-size:0.85rem;font-weight:400;color:var(--text-secondary);">(approved)</span></h2>
+          <div id="regBarChart" class="bar-chart-container"></div>
+        </div>
+
+        <!-- Average rating per event -->
+        <div class="event-stats-section" style="margin-top:40px;">
+          <h2>Average Feedback Rating per Event</h2>
+          <div id="ratingByEvent" class="event-participation-list"></div>
+        </div>
+
+        <!-- Events that exceeded capacity -->
+        <div class="event-stats-section" style="margin-top:40px;">
+          <h2>Events at Full Capacity</h2>
+          <div id="exceededCapacityList" class="event-participation-list"></div>
+        </div>
+
+        <!-- Students who registered but didn't submit feedback -->
+        <div class="event-stats-section" style="margin-top:40px;">
+          <h2>Students Without Feedback <span style="font-size:0.85rem;font-weight:400;color:var(--text-secondary);">(registered but no feedback submitted for past events)</span></h2>
+          <div id="noFeedbackList" class="event-participation-list"></div>
+        </div>
       </div>
 
       <div id="eventsTab" class="tab-content">
@@ -158,6 +182,9 @@
                   <label for="eventCategory">Category</label>
                   <select id="eventCategory">
                     <option value="">Select category</option>
+                    <option value="technical">Technical</option>
+                    <option value="cultural">Cultural</option>
+                    <option value="ai">AI / Machine Learning</option>
                     <option value="conference">Conference</option>
                     <option value="workshop">Workshop</option>
                     <option value="hackathon">Hackathon</option>
@@ -166,6 +193,10 @@
                     <option value="other">Other</option>
                   </select>
                 </div>
+              </div>
+              <div class="form-group">
+                <label for="eventSpeaker">Speaker / Organizer</label>
+                <input type="text" id="eventSpeaker" placeholder="Speaker or organizer name">
               </div>
               <div class="form-group">
                 <label for="eventDescription">Description</label>
@@ -264,6 +295,9 @@
             <label for="editEventCategory">Category</label>
             <select id="editEventCategory">
               <option value="">Select category</option>
+              <option value="technical">Technical</option>
+              <option value="cultural">Cultural</option>
+              <option value="ai">AI / Machine Learning</option>
               <option value="conference">Conference</option>
               <option value="workshop">Workshop</option>
               <option value="hackathon">Hackathon</option>
@@ -272,6 +306,10 @@
               <option value="other">Other</option>
             </select>
           </div>
+        </div>
+        <div class="form-group">
+          <label for="editEventSpeaker">Speaker / Organizer</label>
+          <input type="text" id="editEventSpeaker" placeholder="Speaker or organizer name">
         </div>
         <div class="form-group">
           <label for="editEventCapacity">Max Capacity</label>

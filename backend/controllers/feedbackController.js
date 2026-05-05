@@ -8,22 +8,39 @@ const getTopics = async (req, res) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [pastEvents] = await pool.query(
-      'SELECT DISTINCT title FROM events WHERE date < ? ORDER BY date DESC',
+      'SELECT DISTINCT id, title FROM events WHERE date < ? ORDER BY date DESC',
       [today]
     );
-    eventTopics = pastEvents.map(e => e.title);
+    eventTopics = pastEvents.map(e => ({ id: e.id, title: e.title }));
   } catch (error) {
     console.error('Error fetching event topics:', error);
-    // Fall through and return just the general topics
   }
-  res.json({ topics: [...eventTopics, ...GENERAL_TOPICS] });
+  res.json({ topics: GENERAL_TOPICS, eventTopics });
+};
+
+// GET /api/feedback/my-events  — events the logged-in user attended (approved registration)
+const getMyAttendedEvents = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [events] = await pool.query(`
+      SELECT e.id, e.title, e.date
+      FROM registrations r
+      JOIN events e ON r.event_id = e.id
+      WHERE r.user_id = ? AND r.status = 'approved'
+      ORDER BY e.date DESC
+    `, [userId]);
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching attended events:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
 // GET /api/feedback
 const getFeedback = async (req, res) => {
   try {
     const { topic } = req.query;
-    let query = 'SELECT id, user_name, topic, rating, message, created_at FROM feedback';
+    let query = 'SELECT id, user_name, event_id, topic, rating, message, would_recommend, created_at FROM feedback';
     const params = [];
 
     if (topic && topic !== 'all') {
@@ -44,10 +61,14 @@ const getFeedback = async (req, res) => {
 // POST /api/feedback
 const createFeedback = async (req, res) => {
   try {
-    const { topic, rating, message, user_name } = req.body;
+    const { topic, rating, message, user_name, event_id, would_recommend } = req.body;
 
     if (!topic || !message) {
       return res.status(400).json({ error: 'Topic and message are required' });
+    }
+
+    if (message.trim().length > 1000) {
+      return res.status(400).json({ error: 'Comment must not exceed 1000 characters' });
     }
 
     const parsedRating = parseInt(rating, 10);
@@ -60,10 +81,17 @@ const createFeedback = async (req, res) => {
       : (user_name && user_name.trim()) || 'Anonymous';
 
     const userId = req.user ? req.user.id : null;
+    const eventIdVal = event_id ? parseInt(event_id, 10) : null;
+
+    // Validate would_recommend: accept true/false/"yes"/"no"/1/0
+    let recommendVal = null;
+    if (would_recommend !== undefined && would_recommend !== null && would_recommend !== '') {
+      recommendVal = (would_recommend === true || would_recommend === 'yes' || would_recommend === '1' || would_recommend === 1) ? 1 : 0;
+    }
 
     const [result] = await pool.query(
-      'INSERT INTO feedback (user_id, user_name, topic, rating, message) VALUES (?, ?, ?, ?, ?)',
-      [userId, displayName, topic, parsedRating, message.trim()]
+      'INSERT INTO feedback (user_id, user_name, event_id, topic, rating, message, would_recommend) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userId, displayName, eventIdVal, topic, parsedRating, message.trim(), recommendVal]
     );
 
     res.status(201).json({
@@ -76,4 +104,4 @@ const createFeedback = async (req, res) => {
   }
 };
 
-module.exports = { getTopics, getFeedback, createFeedback };
+module.exports = { getTopics, getFeedback, createFeedback, getMyAttendedEvents };

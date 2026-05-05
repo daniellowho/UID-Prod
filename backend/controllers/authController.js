@@ -6,10 +6,16 @@ require('dotenv').config();
 
 const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, roll_number, department } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email address' });
     }
 
     const [existingUsers] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
@@ -19,8 +25,8 @@ const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      [name, email, hashedPassword, 'user']
+      'INSERT INTO users (name, email, password, role, roll_number, department) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'user', roll_number || null, department || null]
     );
 
     const token = jwt.sign(
@@ -36,7 +42,7 @@ const signup = async (req, res) => {
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: { id: result.insertId, name, email, role: 'user' }
+      user: { id: result.insertId, name, email, role: 'user', roll_number: roll_number || null, department: department || null }
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -88,7 +94,7 @@ const login = async (req, res) => {
 
 const getCurrentUser = async (req, res) => {
   try {
-    const [users] = await pool.query('SELECT id, name, email, role, created_at FROM users WHERE id = ?', [req.user.id]);
+    const [users] = await pool.query('SELECT id, name, email, role, roll_number, department, created_at FROM users WHERE id = ?', [req.user.id]);
     if (users.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }

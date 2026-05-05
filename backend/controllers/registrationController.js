@@ -4,45 +4,57 @@ const QRCode = require('qrcode');
 const { sendQRCodeEmail } = require('../ai/emailService');
 
 const registerForEvent = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
     const { eventId } = req.params;
     const userId = req.user.id;
 
-    const [events] = await pool.query('SELECT * FROM events WHERE id = ?', [eventId]);
+    // Start transaction to prevent overbooking concurrently
+    await connection.beginTransaction();
+
+    const [events] = await connection.query('SELECT * FROM events WHERE id = ? FOR UPDATE', [eventId]);
     if (events.length === 0) {
+      await connection.rollback();
       return res.status(404).json({ error: 'Event not found' });
     }
 
     const event = events[0];
 
-    // Enforce capacity limit
-    if (event.max_capacity) {
-      const [countRows] = await pool.query(
-        'SELECT COUNT(*) as cnt FROM registrations WHERE event_id = ? AND status = ?',
-        [eventId, 'approved']
-      );
-      if (countRows[0].cnt >= event.max_capacity) {
-        return res.status(400).json({ error: 'This event has reached its maximum capacity' });
-      }
-    }
-
-    const [existing] = await pool.query(
+    // Check for duplicate registration inside the transaction
+    const [existing] = await connection.query(
       'SELECT * FROM registrations WHERE user_id = ? AND event_id = ?',
       [userId, eventId]
     );
 
     if (existing.length > 0) {
+      await connection.rollback();
       return res.status(400).json({ error: 'Already registered for this event', status: existing[0].status });
     }
 
-    await pool.query(
+    // Enforce capacity limit inside the transaction (prevents overbooking)
+    if (event.max_capacity) {
+      const [countRows] = await connection.query(
+        'SELECT COUNT(*) as cnt FROM registrations WHERE event_id = ? AND status = ?',
+        [eventId, 'approved']
+      );
+      if (countRows[0].cnt >= event.max_capacity) {
+        await connection.rollback();
+        return res.status(400).json({ error: 'This event has reached its maximum capacity' });
+      }
+    }
+
+    await connection.query(
       'INSERT INTO registrations (user_id, event_id, status) VALUES (?, ?, ?)',
       [userId, eventId, 'pending']
     );
 
+    await connection.commit();
     res.status(201).json({ message: 'Registration request submitted', status: 'pending' });
   } catch (error) {
+    await connection.rollback();
     res.status(500).json({ error: 'Server error' });
+  } finally {
+    connection.release();
   }
 };
 

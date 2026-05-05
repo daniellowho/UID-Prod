@@ -148,9 +148,26 @@ async function handleSignup(e) {
   errorLabel.style.display = 'none';
 
   const name = document.getElementById('name').value.trim();
+  const rollNumber = document.getElementById('rollNumber') ? document.getElementById('rollNumber').value.trim() : '';
+  const department = document.getElementById('department') ? document.getElementById('department').value : '';
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
+
+  // Mandatory field validation
+  if (!name || !email) {
+    errorLabel.textContent = 'Name and email are required';
+    errorLabel.style.display = 'block';
+    return;
+  }
+
+  // Valid email check
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    errorLabel.textContent = 'Please enter a valid email address';
+    errorLabel.style.display = 'block';
+    return;
+  }
 
   if (password !== confirmPassword) {
     errorLabel.textContent = 'Passwords do not match';
@@ -168,7 +185,7 @@ async function handleSignup(e) {
   submitBtn.innerHTML = '<span>Creating account...</span>';
 
   try {
-    const result = await AuthAPI.signup({ name, email, password });
+    const result = await AuthAPI.signup({ name, email, password, roll_number: rollNumber, department });
     localStorage.setItem('token', result.token);
     localStorage.setItem('user', JSON.stringify(result.user));
     showToast('Account created! Redirecting...', 'success');
