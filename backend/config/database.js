@@ -178,6 +178,73 @@ const initDatabase = async () => {
       )
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        user_name VARCHAR(255) NOT NULL DEFAULT 'Anonymous',
+        topic VARCHAR(255) NOT NULL,
+        rating INT NOT NULL DEFAULT 5,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      )
+    `);
+
+    // Seed past events (already finished) so they appear in feedback topic dropdown
+    const pastEventTitles = [
+      'Tech Conference 2025',
+      'Data Science Summit 2025',
+      'UI/UX Design Workshop',
+      'Blockchain & Web3 Expo',
+      'Annual Hackathon 2025'
+    ];
+    const [existingEvents] = await connection.query("SELECT title FROM events WHERE title IN (?, ?, ?, ?, ?)", pastEventTitles);
+    const existingTitles = existingEvents.map(e => e.title);
+
+    const pastEvents = [
+      ['Tech Conference 2025', 'A premier technology conference covering the latest trends in software, hardware, and innovation.', '2025-11-15', 'Mumbai Convention Center', 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop'],
+      ['Data Science Summit 2025', 'Deep dives into machine learning, big data, and analytics with industry experts.', '2025-12-10', 'Bengaluru Tech Hub', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop'],
+      ['UI/UX Design Workshop', 'Hands-on workshop on modern design principles, Figma, and user research.', '2026-01-20', 'Pune Design Studio', 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=200&fit=crop'],
+      ['Blockchain & Web3 Expo', 'Exploring decentralised applications, NFTs, and the future of the internet.', '2026-02-28', 'Hyderabad HICC', 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop'],
+      ['Annual Hackathon 2025', '48-hour coding marathon with exciting challenges and prizes.', '2025-10-05', 'Chennai Coding Campus', 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=400&h=200&fit=crop']
+    ];
+
+    for (const ev of pastEvents) {
+      if (!existingTitles.includes(ev[0])) {
+        await connection.query(
+          "INSERT INTO events (title, description, date, location, image_url) VALUES (?, ?, ?, ?, ?)",
+          ev
+        );
+      }
+    }
+
+    // Seed sample public feedback / reviews
+    const [existingFeedback] = await connection.query("SELECT COUNT(*) as cnt FROM feedback");
+    if (existingFeedback[0].cnt === 0) {
+      const sampleFeedback = [
+        ['Anonymous', 'Tech Conference 2025', 5, 'Absolutely loved the keynote sessions! The speakers were world-class and the networking opportunities were fantastic.'],
+        ['Priya Sharma', 'Tech Conference 2025', 4, 'Great event overall. The venue was well-organised and the workshops were very informative. Would love more breakout sessions next time.'],
+        ['Rahul Verma', 'Data Science Summit 2025', 5, 'The ML workshops were hands-on and incredibly useful. I learnt more here in two days than months of self-study.'],
+        ['Ananya Singh', 'Data Science Summit 2025', 4, 'Really enjoyed the panel discussions. Some sessions were a bit advanced but overall a great learning experience.'],
+        ['Karthik Nair', 'UI/UX Design Workshop', 5, 'The Figma deep-dive was phenomenal. The instructor was patient and the materials were top-notch.'],
+        ['Meera Joshi', 'Blockchain & Web3 Expo', 3, 'Interesting topics but some talks felt too promotional. The demo booths were the highlight for me.'],
+        ['Siddharth Roy', 'Annual Hackathon 2025', 5, 'Best hackathon I have attended! The problem statements were challenging and the mentors were super helpful. Won 2nd place!'],
+        ['Divya Patel', 'Annual Hackathon 2025', 4, 'Loved the energy and the team collaboration. Food and facilities could be improved but the experience was worth it.'],
+        ['Arun Kumar', 'General', 4, 'EventHub makes it so easy to discover and register for events. The interface is clean and intuitive.'],
+        ['Sneha Gupta', 'Website Experience', 5, 'The platform is smooth and I never had any issues finding events or managing my registrations. Keep up the great work!'],
+        ['Vikram Reddy', 'Event Organization', 4, 'Events are well-organised with clear communication. The email reminders were a nice touch.'],
+        ['Pooja Menon', 'UI/UX Design Workshop', 5, 'Brilliant workshop! The real-world case studies made all the difference. Already applying what I learnt at work.']
+      ];
+
+      for (const fb of sampleFeedback) {
+        await connection.query(
+          "INSERT INTO feedback (user_name, topic, rating, message) VALUES (?, ?, ?, ?)",
+          fb
+        );
+      }
+    }
+
     console.log('Database initialized successfully');
   } finally {
     await connection.end();
