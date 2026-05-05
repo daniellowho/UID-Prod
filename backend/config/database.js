@@ -1,25 +1,82 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
+const DEFAULT_DB_NAME = 'event_management';
+const DEFAULT_DB_HOST = 'localhost';
+const DEFAULT_DB_USER = 'root';
+const DEFAULT_DB_PASSWORD = '';
+
+const getDatabaseUrl = () => process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
+
+const parseDatabaseUrl = (databaseUrl) => {
+  if (!databaseUrl) {
+    return {};
+  }
+
+  const url = new URL(databaseUrl);
+  return {
+    host: url.hostname,
+    port: url.port ? Number(url.port) : undefined,
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: decodeURIComponent(url.pathname.replace(/^\//, '')) || undefined,
+    ssl: url.searchParams.get('ssl') === 'true' ? { rejectUnauthorized: false } : undefined
+  };
+};
+
+const getDatabaseConfig = ({ includeDatabase = true } = {}) => {
+  const urlConfig = parseDatabaseUrl(getDatabaseUrl());
+  const database = process.env.DB_NAME || urlConfig.database || DEFAULT_DB_NAME;
+  const config = {
+    host: process.env.DB_HOST || urlConfig.host || DEFAULT_DB_HOST,
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : urlConfig.port,
+    user: process.env.DB_USER || urlConfig.user || DEFAULT_DB_USER,
+    password: process.env.DB_PASSWORD ?? urlConfig.password ?? DEFAULT_DB_PASSWORD,
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : urlConfig.ssl
+  };
+
+  if (includeDatabase) {
+    config.database = database;
+  }
+
+  return config;
+};
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const connectWithRetry = async (config, { retries = 10, delayMs = 3000 } = {}) => {
+  let lastError;
+
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      return await mysql.createConnection(config);
+    } catch (error) {
+      lastError = error;
+      const isLastAttempt = attempt === retries;
+      if (isLastAttempt) {
+        break;
+      }
+      console.warn(`Database connection failed (${error.code || error.message}). Retrying ${attempt}/${retries - 1} in ${delayMs}ms...`);
+      await sleep(delayMs);
+    }
+  }
+
+  throw lastError;
+};
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'event_management',
+  ...getDatabaseConfig(),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 });
 
 const initDatabase = async () => {
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || ''
-  });
+  const databaseName = process.env.DB_NAME || parseDatabaseUrl(getDatabaseUrl()).database || DEFAULT_DB_NAME;
+  const connection = await connectWithRetry(getDatabaseConfig({ includeDatabase: false }));
 
-  await connection.query(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME || 'event_management'}`);
-  await connection.query(`USE ${process.env.DB_NAME || 'event_management'}`);
+  await connection.query(`CREATE DATABASE IF NOT EXISTS ${mysql.escapeId(databaseName)}`);
+  await connection.query(`USE ${mysql.escapeId(databaseName)}`);
 
   // STUDENT table (mapped to users):
   // Functional dependencies: id -> name, email, password, role, roll_number, department
