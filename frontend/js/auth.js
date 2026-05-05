@@ -8,13 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkAuth() {
   const token = localStorage.getItem('token');
   if (token) {
-    window.location.href = 'user-dashboard.html';
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    window.location.href = user.role === 'admin' ? 'admin.html' : 'user-dashboard.html';
+    return;
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('google_auth') === 'success') {
-    showToast('Google authentication successful!', 'success');
-  }
+
+  const error = urlParams.get('error');
 }
 
 function setupThemeToggle() {
@@ -47,6 +48,8 @@ function updateThemeIcon(theme, sunIcon, moonIcon) {
     }
   }
 }
+
+function updateNavigation() {
   const token = localStorage.getItem('token');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   

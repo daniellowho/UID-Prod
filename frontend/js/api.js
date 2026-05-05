@@ -42,11 +42,6 @@ const AuthAPI = {
     body: JSON.stringify(credentials)
   }),
 
-  googleAuth: (googleData) => apiRequest('/auth/google', {
-    method: 'POST',
-    body: JSON.stringify(googleData)
-  }),
-
   getCurrentUser: () => apiRequest('/auth/me'),
 
   updateProfile: (userData) => apiRequest('/auth/profile', {
@@ -106,5 +101,26 @@ const RegistrationsAPI = {
 const AdminAPI = {
   getAnalytics: () => apiRequest('/admin/analytics'),
 
-  getUsers: () => apiRequest('/admin/users')
+  getUsers: () => apiRequest('/admin/users'),
+
+  getEmailLogs: () => apiRequest('/admin/email/logs'),
+
+  sendEmail: (payload) => apiRequest('/admin/email/send', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+};
+
+const FeedbackAPI = {
+  getTopics: () => apiRequest('/feedback/topics'),
+
+  getAll: (topic) => {
+    const query = topic && topic !== 'all' ? `?topic=${encodeURIComponent(topic)}` : '';
+    return apiRequest(`/feedback${query}`);
+  },
+
+  submit: (data) => apiRequest('/feedback', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
 };

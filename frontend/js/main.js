@@ -3,7 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
   if (token && user) {
-    window.location.href = 'user-dashboard.html';
+    const role = user.role;
+    window.location.href = role === 'admin' ? 'admin.html' : 'user-dashboard.html';
+    return;
   }
 
   loadEvents();
@@ -50,23 +52,51 @@ function displayEvents(events) {
   grid.innerHTML = events.map((event, index) => {
     const imageIndex = event.id % defaultImages.length;
     const imageUrl = event.image_url || defaultImages[imageIndex];
+    const capacity = event.max_capacity;
+    const approved = event.participants_count || 0;
+    const isFull = capacity && approved >= capacity;
+    const pct = capacity ? Math.min(Math.round((approved / capacity) * 100), 100) : 0;
+    const fillClass = pct >= 90 ? 'full' : pct >= 70 ? 'near-full' : '';
+
+    const categoryLabels = {
+      conference: 'Conference', workshop: 'Workshop', hackathon: 'Hackathon',
+      seminar: 'Seminar', networking: 'Networking', other: 'Other'
+    };
+
+    const categoryBadge = event.category
+      ? `<span class="event-category-badge category-${event.category}" style="margin-bottom:8px;display:inline-block;">${categoryLabels[event.category] || event.category}</span>`
+      : '';
+
+    const footerLeft = capacity
+      ? `<div class="capacity-bar-wrapper" style="flex:1;">
+           <div class="capacity-bar-label">
+             <span>Seats</span>
+             <span>${approved}/${capacity}</span>
+           </div>
+           <div class="capacity-bar">
+             <div class="capacity-bar-fill ${fillClass}" style="width:${pct}%"></div>
+           </div>
+         </div>`
+      : `<span class="participants">${approved} participants</span>`;
 
     return `
-      <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}">
+      <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}" onclick="openEventDetail(${event.id})">
         <div class="event-header">
+          ${categoryBadge}
           <h3>${escapeHtml(event.title)}</h3>
           <div class="event-meta">
-            <span>${formatDate(event.date)}</span>
-            <span>${escapeHtml(event.location || 'TBD')}</span>
+            <span>📅 ${formatDate(event.date)}</span>
+            <span>📍 ${escapeHtml(event.location || 'TBD')}</span>
           </div>
         </div>
         <div class="event-body">
           <p class="event-description">${escapeHtml(event.description || 'No description available')}</p>
           <div class="event-footer">
-            <span class="participants">${event.participants_count || 0} participants</span>
-            <button class="btn btn-primary btn-sm register-btn" onclick="handleRegisterClick(${event.id})">
-              Register
-            </button>
+            ${footerLeft}
+            ${isFull
+              ? `<span class="event-full-badge">Full</span>`
+              : `<button class="btn btn-primary btn-sm register-btn" onclick="event.stopPropagation(); handleRegisterClick(${event.id})">Register</button>`
+            }
           </div>
         </div>
       </div>
@@ -239,6 +269,10 @@ function showAlert(title, message, type) {
 
 function closeModal(modalId) {
   document.getElementById(modalId).style.display = 'none';
+}
+
+function openEventDetail(eventId) {
+  window.location.href = `event-detail.html?id=${eventId}`;
 }
 
 function formatDate(dateString) {

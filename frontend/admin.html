@@ -14,6 +14,7 @@
         <li><a href="index.html">Home</a></li>
         <li><a href="user-dashboard.html">User Dashboard</a></li>
         <li><a href="admin.html" class="active">Admin Panel</a></li>
+        <li><a href="attendance/admin-scanner.html">📷 Attendance Scanner</a></li>
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
@@ -80,6 +81,13 @@
           </svg>
           Users
         </button>
+        <button class="tab-btn" data-tab="emails">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          Emails
+        </button>
       </div>
 
       <div id="analyticsTab" class="tab-content active">
@@ -131,9 +139,33 @@
                   <input type="date" id="eventDate" required>
                 </div>
               </div>
-              <div class="form-group">
-                <label for="eventLocation">Location</label>
-                <input type="text" id="eventLocation" placeholder="Enter location">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="eventTime">Start Time</label>
+                  <input type="time" id="eventTime" value="09:00">
+                </div>
+                <div class="form-group">
+                  <label for="eventCapacity">Max Capacity</label>
+                  <input type="number" id="eventCapacity" placeholder="Leave blank for unlimited" min="1">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="eventLocation">Location</label>
+                  <input type="text" id="eventLocation" placeholder="Enter location">
+                </div>
+                <div class="form-group">
+                  <label for="eventCategory">Category</label>
+                  <select id="eventCategory">
+                    <option value="">Select category</option>
+                    <option value="conference">Conference</option>
+                    <option value="workshop">Workshop</option>
+                    <option value="hackathon">Hackathon</option>
+                    <option value="seminar">Seminar</option>
+                    <option value="networking">Networking</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
               </div>
               <div class="form-group">
                 <label for="eventDescription">Description</label>
@@ -170,6 +202,39 @@
         <h2>All Users</h2>
         <div id="usersList" class="users-list"></div>
       </div>
+
+      <div id="emailsTab" class="tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <h2 style="margin:0;">Email Management</h2>
+          <button class="btn btn-primary" onclick="openComposeModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle;">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Compose Email
+          </button>
+        </div>
+
+        <div style="margin-bottom:20px;">
+          <div class="filters" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+            <select id="emailTypeFilter">
+              <option value="all">All Types</option>
+              <option value="welcome">Welcome</option>
+              <option value="qr_code">QR Pass</option>
+              <option value="reminder">Reminder</option>
+              <option value="thank_you">Thank You</option>
+              <option value="custom">Custom</option>
+            </select>
+            <select id="emailStatusFilter">
+              <option value="all">All Status</option>
+              <option value="sent">Sent</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="loadEmailLogs()">Refresh</button>
+          </div>
+        </div>
+
+        <div id="emailLogsList"></div>
+      </div>
     </div>
   </section>
 
@@ -183,13 +248,37 @@
           <label for="editEventTitle">Event Title</label>
           <input type="text" id="editEventTitle" required>
         </div>
-        <div class="form-group">
-          <label for="editEventDate">Date</label>
-          <input type="date" id="editEventDate" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEventDate">Date</label>
+            <input type="date" id="editEventDate" required>
+          </div>
+          <div class="form-group">
+            <label for="editEventTime">Start Time</label>
+            <input type="time" id="editEventTime">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editEventLocation">Location</label>
+            <input type="text" id="editEventLocation">
+          </div>
+          <div class="form-group">
+            <label for="editEventCategory">Category</label>
+            <select id="editEventCategory">
+              <option value="">Select category</option>
+              <option value="conference">Conference</option>
+              <option value="workshop">Workshop</option>
+              <option value="hackathon">Hackathon</option>
+              <option value="seminar">Seminar</option>
+              <option value="networking">Networking</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
-          <label for="editEventLocation">Location</label>
-          <input type="text" id="editEventLocation">
+          <label for="editEventCapacity">Max Capacity</label>
+          <input type="number" id="editEventCapacity" placeholder="Leave blank for unlimited" min="1">
         </div>
         <div class="form-group">
           <label for="editEventDescription">Description</label>
@@ -208,6 +297,34 @@
     </div>
   </div>
 
+  <div id="composeEmailModal" class="modal">
+    <div class="modal-content" style="max-width:560px;width:90%;">
+      <span class="close-modal" onclick="closeModal('composeEmailModal')">&times;</span>
+      <h2>Compose Email</h2>
+      <form id="composeEmailForm">
+        <div class="form-group">
+          <label for="emailRecipients">Recipients</label>
+          <select id="emailRecipients">
+            <option value="all">All Users</option>
+          </select>
+          <p style="font-size:12px;color:var(--text-secondary);margin:4px 0 0;">Select a specific user or send to all users at once.</p>
+        </div>
+        <div class="form-group">
+          <label for="emailSubject">Subject</label>
+          <input type="text" id="emailSubject" placeholder="Email subject" required>
+        </div>
+        <div class="form-group">
+          <label for="emailMessage">Message</label>
+          <textarea id="emailMessage" rows="6" placeholder="Write your message here…" required style="resize:vertical;"></textarea>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:flex-end;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('composeEmailModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="sendEmailBtn">Send Email</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/admin.js"></script>
@@ -217,5 +334,33 @@
       document.documentElement.setAttribute('data-theme', savedTheme);
     })();
   </script>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">EventHub Admin</div>
+          <p>Manage events, registrations, users, and communications from one place.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Admin</h4>
+          <ul>
+            <li><a href="admin.html">Dashboard</a></li>
+            <li><a href="attendance/admin-scanner.html">Attendance Scanner</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Site</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="user-dashboard.html">User Dashboard</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 EventHub. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+  <script src="js/chatbot.js"></script>
 </body>
 </html>

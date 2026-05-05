@@ -254,7 +254,12 @@
       <div class="logo">EventHub</div>
       <ul class="nav-links">
         <li><a href="index.html">Home</a></li>
+<<<<<<< HEAD
         <li><a href="events.html" class="active">Completed Events</a></li>
+=======
+        <li><a href="events.html" class="active">Events</a></li>
+        <li><a href="feedback.html">Feedback</a></li>
+>>>>>>> fee0bce2c01b0af57bafb90f741fffd09e3dbc32
         <li><a href="login.html" id="loginLink">Login</a></li>
         <li><a href="signup.html" id="signupLink">Sign Up</a></li>
         <li><a href="user-dashboard.html" id="dashboardLink" style="display: none;">Dashboard</a></li>
@@ -297,6 +302,22 @@
       <div class="filter-bar">
         <label for="searchInput">Search:</label>
         <input type="text" id="searchInput" placeholder="Search events...">
+        <label for="categoryFilter">Category:</label>
+        <select id="categoryFilter">
+          <option value="all">All Categories</option>
+          <option value="conference">Conference</option>
+          <option value="workshop">Workshop</option>
+          <option value="hackathon">Hackathon</option>
+          <option value="seminar">Seminar</option>
+          <option value="networking">Networking</option>
+          <option value="other">Other</option>
+        </select>
+        <label for="statusFilter">Status:</label>
+        <select id="statusFilter">
+          <option value="all">All Events</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="past">Past</option>
+        </select>
         <label for="sortSelect">Sort by:</label>
         <select id="sortSelect">
           <option value="date-desc">Date (Most Recent)</option>
@@ -333,7 +354,32 @@
 
   <footer class="footer">
     <div class="container">
-      <p>&copy; 2026 EventHub. All rights reserved.</p>
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">EventHub</div>
+          <p>Discover, register, and attend amazing events. Your next great experience is just a click away.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="login.html">Login</a></li>
+            <li><a href="signup.html">Sign Up</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Account</h4>
+          <ul>
+            <li><a href="user-dashboard.html">Dashboard</a></li>
+            <li><a href="profile.html">Profile</a></li>
+            <li><a href="attendance/user-qr.html">My QR Pass</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 EventHub. All rights reserved.</p>
+      </div>
     </div>
   </footer>
 
@@ -455,9 +501,9 @@
       }
 
       const defaultImages = [
-        'https://images.unsplash.com/photo-1518779578993-ec3589fee39f?w=400&h=200&fit=crop',
-        'https://images.unsplash.com/photo-1517697472173-43c9d7c9a45c?w=400&h=200&fit=crop',
-        'https://images.unsplash.com/photo-1526378722481-4a1a1323ba1a45?w=400&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?w=400&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1517697471339-43c9d7c9a45c?w=400&h=200&fit=crop',
+        'https://images.unsplash.com/photo-1526378722484-6f9f1f0f7f1f?w=400&h=200&fit=crop',
         'https://images.unsplash.com/photo-1515879216487-1a1323ba1a45?w=400&h=200&fit=crop',
         'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop'
       ];
@@ -465,26 +511,64 @@
       grid.innerHTML = events.map((event, index) => {
         const imageIndex = event.id % defaultImages.length;
         const imageUrl = event.image_url || defaultImages[imageIndex];
+<<<<<<< HEAD
         const eventDate = new Date(event.date);
         const isCompleted = eventDate < new Date();
+=======
+        const capacity = event.max_capacity;
+        const approved = event.participants_count || 0;
+        const isFull = capacity && approved >= capacity;
+        const pct = capacity ? Math.min(Math.round((approved / capacity) * 100), 100) : 0;
+        const fillClass = pct >= 90 ? 'full' : pct >= 70 ? 'near-full' : '';
+
+        const categoryLabels = {
+          conference: 'Conference', workshop: 'Workshop', hackathon: 'Hackathon',
+          seminar: 'Seminar', networking: 'Networking', other: 'Other'
+        };
+
+        const categoryBadge = event.category
+          ? `<span class="event-category-badge category-${event.category}">${categoryLabels[event.category] || event.category}</span>`
+          : '';
+
+        const capacitySection = capacity
+          ? `<div class="capacity-bar-wrapper">
+               <div class="capacity-bar-label">
+                 <span>Capacity</span>
+                 <span>${approved}/${capacity}${isFull ? ' · Full' : ''}</span>
+               </div>
+               <div class="capacity-bar">
+                 <div class="capacity-bar-fill ${fillClass}" style="width:${pct}%"></div>
+               </div>
+             </div>`
+          : `<span class="participants">${approved} registered</span>`;
+>>>>>>> fee0bce2c01b0af57bafb90f741fffd09e3dbc32
 
         return `
-          <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}">
+          <div class="event-card" style="animation-delay: ${index * 0.1}s" data-event-id="${event.id}" onclick="openEventDetail(${event.id})">
             <div class="event-image-container">
-              <img src="${imageUrl}" alt="${escapeHtml(event.title)}" class="event-image" 
+              <img src="${imageUrl}" alt="${escapeHtml(event.title)}" class="event-image"
                    onerror="this.src='${defaultImages[imageIndex]}'">
               ${isCompleted ? '<div style="position: absolute; top: 12px; right: 12px; background: rgba(107,114,128,0.9); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; z-index: 2; backdrop-filter: blur(4px);">Completed</div>' : ''}
             </div>
             <div class="event-card-body">
+              ${categoryBadge}
               <h3>${escapeHtml(event.title)}</h3>
               <div class="event-meta">
-                <span>${formatDate(event.date)}</span>
-                <span>${escapeHtml(event.location || 'TBD')}</span>
+                <span>📅 ${formatDate(event.date)}</span>
+                <span>📍 ${escapeHtml(event.location || 'TBD')}</span>
               </div>
               <p class="event-description">${escapeHtml(event.description || 'No description available')}</p>
               <div class="event-footer">
+<<<<<<< HEAD
                 <span class="participants">${event.participants_count || 0} participants</span>
                 <span style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 500;">Event Ended</span>
+=======
+                ${capacitySection}
+                ${isFull
+                  ? `<span class="event-full-badge">Full</span>`
+                  : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); handleRegisterClick(${event.id})">Register</button>`
+                }
+>>>>>>> fee0bce2c01b0af57bafb90f741fffd09e3dbc32
               </div>
             </div>
           </div>
@@ -507,20 +591,36 @@
     function setupFilters() {
       const searchInput = document.getElementById('searchInput');
       const sortSelect = document.getElementById('sortSelect');
+      const categoryFilter = document.getElementById('categoryFilter');
+      const statusFilter = document.getElementById('statusFilter');
 
       searchInput?.addEventListener('input', applyFilters);
       sortSelect?.addEventListener('change', applyFilters);
+      categoryFilter?.addEventListener('change', applyFilters);
+      statusFilter?.addEventListener('change', applyFilters);
     }
 
     function applyFilters() {
       const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
       const sortBy = document.getElementById('sortSelect')?.value || 'date-asc';
+      const categoryVal = document.getElementById('categoryFilter')?.value || 'all';
+      const statusVal = document.getElementById('statusFilter')?.value || 'all';
+      const today = new Date(); today.setHours(0, 0, 0, 0);
 
-      let filtered = allEvents.filter(event =>
-        event.title.toLowerCase().includes(searchTerm) ||
-        event.description?.toLowerCase().includes(searchTerm) ||
-        event.location?.toLowerCase().includes(searchTerm)
-      );
+      let filtered = allEvents.filter(event => {
+        const matchSearch = event.title.toLowerCase().includes(searchTerm) ||
+          event.description?.toLowerCase().includes(searchTerm) ||
+          event.location?.toLowerCase().includes(searchTerm);
+
+        const matchCategory = categoryVal === 'all' || event.category === categoryVal;
+
+        const eventDate = new Date(event.date);
+        const matchStatus = statusVal === 'all' ||
+          (statusVal === 'upcoming' && eventDate >= today) ||
+          (statusVal === 'past' && eventDate < today);
+
+        return matchSearch && matchCategory && matchStatus;
+      });
 
       switch(sortBy) {
         case 'date-asc':
@@ -610,6 +710,10 @@
       document.getElementById(modalId).style.display = 'none';
     }
 
+    function openEventDetail(eventId) {
+      window.location.href = `event-detail.html?id=${eventId}`;
+    }
+
     function formatDate(dateString) {
       const options = { year: 'numeric', month: 'short', day: 'numeric' };
       return new Date(dateString).toLocaleDateString('en-US', options);
@@ -621,5 +725,6 @@
       return div.innerHTML;
     }
   </script>
+  <script src="js/chatbot.js"></script>
 </body>
 </html>
