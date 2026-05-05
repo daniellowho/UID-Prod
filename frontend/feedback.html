@@ -761,12 +761,6 @@
         submitBtn.textContent = 'Submit Feedback';
       }
     }
-        showToast(err.message || 'Failed to submit feedback.', 'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Feedback';
-      }
-    }
 
     function starsString(rating) {
       return '★'.repeat(Math.max(0, Math.min(5, rating))) + '☆'.repeat(5 - Math.max(0, Math.min(5, rating)));

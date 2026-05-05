@@ -8,7 +8,7 @@ const getTopics = async (req, res) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [pastEvents] = await pool.query(
-      'SELECT DISTINCT id, title FROM events WHERE date < ? ORDER BY date DESC',
+      'SELECT id, title, date FROM events WHERE date < ? ORDER BY date DESC',
       [today]
     );
     eventTopics = pastEvents.map(e => ({ id: e.id, title: e.title }));

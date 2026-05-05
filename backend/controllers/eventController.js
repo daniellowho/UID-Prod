@@ -39,25 +39,18 @@ const getEventById = async (req, res) => {
 
 const createEvent = async (req, res) => {
   try {
-<<<<<<< HEAD
-    const { title, description, date, location } = req.body;
-=======
     const { title, description, date, location, start_time, category, max_capacity, speaker } = req.body;
->>>>>>> 7d1407119e09a51bf5b8c9549f65df4cac929d5c
     const created_by = req.user.id;
 
     if (!title || !date) {
       return res.status(400).json({ error: 'Title and date are required' });
     }
 
+    const capacityVal = max_capacity ? parseInt(max_capacity, 10) : null;
+
     const [result] = await pool.query(
-<<<<<<< HEAD
-      'INSERT INTO events (title, description, date, location, created_by) VALUES (?, ?, ?, ?, ?)',
-      [title, description, date, location, created_by]
-=======
       'INSERT INTO events (title, description, date, location, start_time, category, max_capacity, speaker, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [title, description, date, location, start_time || '09:00:00', category || null, capacityVal, speaker || null, created_by]
->>>>>>> 7d1407119e09a51bf5b8c9549f65df4cac929d5c
     );
 
     res.status(201).json({
@@ -73,22 +66,18 @@ const createEvent = async (req, res) => {
 const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-<<<<<<< HEAD
-    const { title, description, date, location } = req.body;
-=======
     const { title, description, date, location, start_time, category, max_capacity, speaker } = req.body;
->>>>>>> 7d1407119e09a51bf5b8c9549f65df4cac929d5c
 
     const [existing] = await pool.query('SELECT * FROM events WHERE id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({ error: 'Event not found' });
     }
 
+    const capacityVal = max_capacity !== undefined
+      ? (max_capacity ? parseInt(max_capacity, 10) : null)
+      : existing[0].max_capacity;
+
     await pool.query(
-<<<<<<< HEAD
-      'UPDATE events SET title = ?, description = ?, date = ?, location = ? WHERE id = ?',
-      [title || existing[0].title, description || existing[0].description, date || existing[0].date, location || existing[0].location, id]
-=======
       'UPDATE events SET title = ?, description = ?, date = ?, location = ?, start_time = ?, category = ?, max_capacity = ?, speaker = ? WHERE id = ?',
       [
         title || existing[0].title,
@@ -101,7 +90,6 @@ const updateEvent = async (req, res) => {
         speaker !== undefined ? (speaker || null) : existing[0].speaker,
         id
       ]
->>>>>>> 7d1407119e09a51bf5b8c9549f65df4cac929d5c
     );
 
     res.json({ message: 'Event updated successfully' });

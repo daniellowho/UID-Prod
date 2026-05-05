@@ -3,6 +3,7 @@ const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const path = require('path');
 require('dotenv').config();
 
 const { initDatabase } = require('./config/database');
@@ -10,6 +11,8 @@ const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const registrationRoutes = require('./routes/registrations');
 const adminRoutes = require('./routes/admin');
+const feedbackRoutes = require('./routes/feedback');
+const attendanceRoutes = require('./routes/attendance');
 
 const app = express();
 
@@ -61,13 +64,26 @@ app.get('/api/auth/google/callback', passport.authenticate('google', { failureRe
   res.redirect('http://localhost:3000?google_auth=success');
 });
 
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/registrations', registrationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/attendance', attendanceRoutes);
+
+// Serve frontend static files (for Railway / production deployment)
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Event Management API is running' });
+});
+
+// Catch-all: serve index.html for any non-API route (SPA fallback)
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+  }
 });
 
 app.use((err, req, res, next) => {

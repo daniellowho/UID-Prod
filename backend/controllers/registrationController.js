@@ -6,7 +6,9 @@ const registerForEvent = async (req, res) => {
     const { eventId } = req.params;
     const userId = req.user.id;
 
-    // Start transaction to prevent overbooking concurrently
+    // ── Transaction: prevent overbooking concurrently ──
+    // START TRANSACTION locks the row with FOR UPDATE so two concurrent
+    // requests cannot both pass the capacity check.
     await connection.beginTransaction();
 
     const [events] = await connection.query('SELECT * FROM events WHERE id = ? FOR UPDATE', [eventId]);
@@ -15,14 +17,10 @@ const registerForEvent = async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
 
-<<<<<<< HEAD
-    const [existing] = await pool.query(
-=======
     const event = events[0];
 
     // Check for duplicate registration inside the transaction
     const [existing] = await connection.query(
->>>>>>> 7d1407119e09a51bf5b8c9549f65df4cac929d5c
       'SELECT * FROM registrations WHERE user_id = ? AND event_id = ?',
       [userId, eventId]
     );
@@ -49,6 +47,8 @@ const registerForEvent = async (req, res) => {
       [userId, eventId, 'pending']
     );
 
+    // COMMIT — only at this point is the registration made permanent.
+    // If any step above failed, ROLLBACK would have undone everything.
     await connection.commit();
     res.status(201).json({ message: 'Registration request submitted', status: 'pending' });
   } catch (error) {
