@@ -114,6 +114,8 @@ const AdminAPI = {
 const FeedbackAPI = {
   getTopics: () => apiRequest('/feedback/topics'),
 
+  getMyEvents: () => apiRequest('/feedback/my-events'),
+
   getAll: (topic) => {
     const query = topic && topic !== 'all' ? `?topic=${encodeURIComponent(topic)}` : '';
     return apiRequest(`/feedback${query}`);

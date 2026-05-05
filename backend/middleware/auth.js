@@ -43,4 +43,4 @@ const isAuthenticated = (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, isAdmin, isAuthenticated };
+module.exports = { authenticate, isAdmin, isAuthenticated, requireAuth: authenticate };

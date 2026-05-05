@@ -276,7 +276,7 @@
         const ev = await EventsAPI.getById(id);
 
         const defaultImage = 'https://images.unsplash.com/photo-1518779578993-ec3579fee39f?w=1200&h=400&fit=crop';
-        heroImg.src = ev.image_url || defaultImage;
+        heroImg.src = resolveMediaUrl(ev.image_url) || defaultImage;
         heroImg.alt = escapeHtml(ev.title);
 
         const formattedDate = new Date(ev.date).toLocaleDateString('en-US', {
@@ -319,6 +319,11 @@
               <span class="detail-info-label">👥 Registered</span>
               <span class="detail-info-value">${ev.participants_count || 0}${ev.max_capacity ? ' / ' + ev.max_capacity : ''}</span>
             </div>
+            ${ev.speaker ? `
+            <div class="detail-info-item">
+              <span class="detail-info-label">🎤 Speaker</span>
+              <span class="detail-info-value">${escapeHtml(ev.speaker)}</span>
+            </div>` : ''}
             ${ev.created_by_name ? `
             <div class="detail-info-item">
               <span class="detail-info-label">🏷️ Organized by</span>
@@ -459,4 +464,3 @@
   <script src="js/chatbot.js"></script>
 </body>
 </html>
-

@@ -99,6 +99,7 @@ function setupEventForms() {
         description: document.getElementById('eventDescription').value.trim(),
         start_time: document.getElementById('eventTime').value || '09:00',
         category: document.getElementById('eventCategory').value || null,
+        speaker: document.getElementById('eventSpeaker') ? document.getElementById('eventSpeaker').value.trim() : null,
         max_capacity: document.getElementById('eventCapacity').value
           ? parseInt(document.getElementById('eventCapacity').value, 10)
           : null
@@ -133,6 +134,7 @@ function setupEventForms() {
         description: document.getElementById('editEventDescription').value.trim(),
         start_time: document.getElementById('editEventTime').value || '09:00',
         category: document.getElementById('editEventCategory').value || null,
+        speaker: document.getElementById('editEventSpeaker') ? document.getElementById('editEventSpeaker').value.trim() : null,
         max_capacity: document.getElementById('editEventCapacity').value
           ? parseInt(document.getElementById('editEventCapacity').value, 10)
           : null
@@ -187,6 +189,7 @@ async function loadAnalytics() {
     animateNumber('approvedCount', data.totals.approved);
     animateNumber('deniedCount', data.totals.denied);
 
+    // Event participation table
     const eventParticipation = document.getElementById('eventParticipation');
     if (data.eventParticipation && data.eventParticipation.length > 0) {
       eventParticipation.innerHTML = `
@@ -221,9 +224,138 @@ async function loadAnalytics() {
     } else {
       eventParticipation.innerHTML = '<p>No event data available.</p>';
     }
+
+    // Bar chart: registrations per event (CSS heights)
+    renderBarChart(data.eventParticipation || []);
+
+    // Average rating per event
+    renderFeedbackByEvent(data.feedbackByEvent || []);
+
+    // Events that exceeded capacity
+    renderExceededCapacity(data.exceededCapacity || []);
+
+    // Students without feedback
+    renderNoFeedbackStudents(data.noFeedback || []);
+
   } catch (error) {
     console.error('Failed to load analytics:', error);
   }
+}
+
+function renderBarChart(events) {
+  const container = document.getElementById('regBarChart');
+  if (!container) return;
+
+  if (!events || events.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-secondary);">No registration data available.</p>';
+    return;
+  }
+
+  const maxVal = Math.max(...events.map(e => e.approved_count || 0), 1);
+  const MAX_HEIGHT = 180; // px
+
+  container.innerHTML = events.map(ev => {
+    const count = ev.approved_count || 0;
+    const barHeight = Math.max(Math.round((count / maxVal) * MAX_HEIGHT), count > 0 ? 8 : 0);
+    const shortTitle = ev.title.length > 20 ? ev.title.substring(0, 18) + '…' : ev.title;
+    return `
+      <div class="bar-chart-bar-wrap" title="${escapeHtml(ev.title)}: ${count} approved">
+        <div class="bar-chart-bar-value">${count}</div>
+        <div class="bar-chart-bar" style="height:${barHeight}px;"></div>
+        <div class="bar-chart-bar-label">${escapeHtml(shortTitle)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFeedbackByEvent(feedbackData) {
+  const container = document.getElementById('ratingByEvent');
+  if (!container) return;
+
+  if (!feedbackData || feedbackData.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-secondary);">No feedback data available yet.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="event-stats-header">
+      <div>Event</div>
+      <div>Avg Rating</div>
+      <div>Responses</div>
+      <div>Would Recommend</div>
+    </div>
+    ${feedbackData.map(fb => {
+      const stars = '★'.repeat(Math.round(fb.avg_rating || 0)) + '☆'.repeat(5 - Math.round(fb.avg_rating || 0));
+      const totalRec = (fb.recommend_yes || 0) + (fb.recommend_no || 0);
+      const recPct = totalRec > 0 ? Math.round((fb.recommend_yes / totalRec) * 100) : null;
+      return `
+        <div class="event-participation-item">
+          <div><strong>${escapeHtml(fb.title)}</strong></div>
+          <div>
+            <span style="color:#f59e0b;font-size:1rem;">${stars}</span>
+            <div style="font-weight:700;">${fb.avg_rating || '—'}</div>
+          </div>
+          <div><div style="font-weight:700;">${fb.feedback_count}</div></div>
+          <div>${recPct !== null ? `<div style="font-weight:700;color:var(--success-color);">${recPct}% yes</div>` : '<div style="color:var(--text-secondary);">N/A</div>'}</div>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+function renderExceededCapacity(events) {
+  const container = document.getElementById('exceededCapacityList');
+  if (!container) return;
+
+  if (!events || events.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-secondary);">No events have reached full capacity.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="event-stats-header">
+      <div>Event</div>
+      <div>Capacity</div>
+      <div>Approved</div>
+      <div>Status</div>
+    </div>
+    ${events.map(ev => `
+      <div class="event-participation-item">
+        <div><strong>${escapeHtml(ev.title)}</strong></div>
+        <div><div style="font-weight:700;">${ev.max_capacity}</div></div>
+        <div><div style="font-weight:700;color:var(--danger-color);">${ev.approved_count}</div></div>
+        <div><span class="status-badge status-denied">Full</span></div>
+      </div>
+    `).join('')}
+  `;
+}
+
+function renderNoFeedbackStudents(students) {
+  const container = document.getElementById('noFeedbackList');
+  if (!container) return;
+
+  if (!students || students.length === 0) {
+    container.innerHTML = '<p style="color:var(--text-secondary);">All registered students have submitted feedback.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="event-stats-header" style="grid-template-columns:2fr 2fr 1fr;">
+      <div>Student</div>
+      <div>Event</div>
+      <div>Event Date</div>
+    </div>
+    ${students.map(s => `
+      <div class="event-participation-item" style="grid-template-columns:2fr 2fr 1fr;">
+        <div>
+          <strong>${escapeHtml(s.name)}</strong>
+          <p style="font-size:0.8rem;color:var(--text-secondary);">${escapeHtml(s.email)}${s.roll_number ? ' · ' + escapeHtml(s.roll_number) : ''}${s.department ? ' · ' + escapeHtml(s.department) : ''}</p>
+        </div>
+        <div><strong>${escapeHtml(s.event_title)}</strong></div>
+        <div>${formatDate(s.event_date)}</div>
+      </div>
+    `).join('')}
+  `;
 }
 
 function animateNumber(elementId, target) {
@@ -392,7 +524,7 @@ async function loadUsers() {
       <div class="user-item" style="animation-delay: ${index * 0.05}s">
         <div class="user-info">
           <h4>${escapeHtml(user.name)}</h4>
-          <p>${escapeHtml(user.email)}</p>
+          <p>${escapeHtml(user.email)}${user.roll_number ? ' · ' + escapeHtml(user.roll_number) : ''}${user.department ? ' · ' + escapeHtml(user.department) : ''}</p>
         </div>
         <div style="text-align: right;">
           <p><strong>${user.registration_count || 0}</strong> registrations</p>
@@ -428,6 +560,8 @@ async function editEvent(eventId) {
       : '09:00';
     document.getElementById('editEventCategory').value = event.category || '';
     document.getElementById('editEventCapacity').value = event.max_capacity || '';
+    const speakerEl = document.getElementById('editEventSpeaker');
+    if (speakerEl) speakerEl.value = event.speaker || '';
 
     document.getElementById('editEventModal').style.display = 'flex';
   } catch (error) {

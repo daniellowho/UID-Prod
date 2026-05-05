@@ -396,15 +396,23 @@
             <input type="text" id="nameInput" placeholder="Anonymous" maxlength="100">
           </div>
 
-          <div class="form-group">
-            <label for="topicSelect">Topic</label>
-            <select id="topicSelect">
-              <option value="">Loading topics…</option>
+          <!-- Event selector (shows attended events for logged-in users, all past events otherwise) -->
+          <div class="form-group" id="eventSelectGroup">
+            <label for="eventSelect">Event <span style="color:var(--danger-color);">*</span></label>
+            <select id="eventSelect">
+              <option value="">Loading events…</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Rating</label>
+            <label for="topicSelect">Topic / Category</label>
+            <select id="topicSelect">
+              <option value="">Select a topic</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Rating <span style="color:var(--danger-color);">*</span></label>
             <div class="star-rating" id="starRating">
               <input type="radio" id="star5" name="rating" value="5">
               <label for="star5" title="5 stars">&#9733;</label>
@@ -420,8 +428,23 @@
           </div>
 
           <div class="form-group">
-            <label for="messageInput">Your Feedback</label>
-            <textarea id="messageInput" placeholder="Tell us about your experience…" maxlength="1000"></textarea>
+            <label for="messageInput">Your Feedback <span style="color:var(--danger-color);">*</span></label>
+            <textarea id="messageInput" placeholder="Tell us about your experience… (max 1000 characters)" maxlength="1000"></textarea>
+            <small id="charCount" style="color:var(--text-secondary);font-size:0.8rem;">0 / 1000</small>
+          </div>
+
+          <div class="form-group">
+            <label>Would you recommend this event?</label>
+            <div style="display:flex;gap:24px;margin-top:6px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.95rem;font-weight:500;color:var(--text-primary);">
+                <input type="radio" name="recommend" id="recommendYes" value="yes" style="width:auto;margin:0;">
+                👍 Yes
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.95rem;font-weight:500;color:var(--text-primary);">
+                <input type="radio" name="recommend" id="recommendNo" value="no" style="width:auto;margin:0;">
+                👎 No
+              </label>
+            </div>
           </div>
 
           <button class="btn btn-primary" id="submitBtn" style="width: 100%;">Submit Feedback</button>
@@ -531,8 +554,17 @@
       });
 
       // ── Load topics & reviews ──
-      loadTopics();
+      loadTopicsAndEvents();
       loadReviews('all');
+
+      // ── Character counter ──
+      const msgInput = document.getElementById('messageInput');
+      const charCount = document.getElementById('charCount');
+      if (msgInput && charCount) {
+        msgInput.addEventListener('input', () => {
+          charCount.textContent = `${msgInput.value.length} / 1000`;
+        });
+      }
 
       // ── Filter change ──
       document.getElementById('filterSelect').addEventListener('change', (e) => {
@@ -545,25 +577,51 @@
 
     const FALLBACK_TOPICS = ['General', 'Website Experience', 'Event Organization', 'Support'];
 
-    async function loadTopics() {
-      let topics = FALLBACK_TOPICS;
+    async function loadTopicsAndEvents() {
+      const token = localStorage.getItem('token');
+      const topicSelect = document.getElementById('topicSelect');
+      const filterSelect = document.getElementById('filterSelect');
+      const eventSelect = document.getElementById('eventSelect');
+
+      // Load general topics
+      let generalTopics = FALLBACK_TOPICS;
       try {
         const data = await FeedbackAPI.getTopics();
         if (data && Array.isArray(data.topics) && data.topics.length > 0) {
-          topics = data.topics;
+          generalTopics = data.topics;
         }
       } catch (err) {
         console.error('Failed to load topics:', err);
       }
 
-      const topicSelect = document.getElementById('topicSelect');
-      const filterSelect = document.getElementById('filterSelect');
-
-      topicSelect.innerHTML = '<option value="">Select a topic…</option>';
-      topics.forEach(t => {
+      topicSelect.innerHTML = '<option value="">Select a topic</option>';
+      generalTopics.forEach(t => {
         topicSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`;
         filterSelect.innerHTML += `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`;
       });
+
+      // Load events for the event selector
+      eventSelect.innerHTML = '<option value="">General / Non-event feedback</option>';
+      try {
+        let events = [];
+        if (token) {
+          // Logged-in: show events they attended
+          events = await FeedbackAPI.getMyEvents();
+        } else {
+          // Guest: load all past events from topics API
+          const data = await FeedbackAPI.getTopics();
+          if (data && Array.isArray(data.eventTopics)) {
+            events = data.eventTopics;
+          }
+        }
+        events.forEach(ev => {
+          const dateStr = ev.date ? ` (${new Date(ev.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})` : '';
+          eventSelect.innerHTML += `<option value="${ev.id}">${escapeHtml(ev.title)}${escapeHtml(dateStr)}</option>`;
+          filterSelect.innerHTML += `<option value="${escapeHtml(ev.title)}">${escapeHtml(ev.title)}</option>`;
+        });
+      } catch (err) {
+        console.error('Failed to load events for feedback:', err);
+      }
     }
 
     async function loadReviews(topic) {
@@ -628,24 +686,40 @@
           </div>
           <div class="review-topic-badge">${escapeHtml(r.topic)}</div>
           <p class="review-message">${escapeHtml(r.message)}</p>
+          ${r.would_recommend !== null && r.would_recommend !== undefined ? `<p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">${r.would_recommend ? '👍 Would recommend' : '👎 Would not recommend'}</p>` : ''}
         </div>
       `).join('');
     }
 
     async function submitFeedback() {
-      const topic = document.getElementById('topicSelect').value.trim();
+      const eventSelect = document.getElementById('eventSelect');
+      const eventId = eventSelect ? (eventSelect.value || null) : null;
+      const topicSelect = document.getElementById('topicSelect');
       const message = document.getElementById('messageInput').value.trim();
       const rating = document.querySelector('input[name="rating"]:checked')?.value;
+      const recommend = document.querySelector('input[name="recommend"]:checked')?.value;
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user') || '{}');
       const nameInput = document.getElementById('nameInput').value.trim();
 
+      // Determine topic: use event title if event selected, else selected topic
+      let topic = topicSelect.value.trim();
+      if (!topic && eventId) {
+        // Use the event title as topic fallback
+        const selectedOpt = eventSelect.options[eventSelect.selectedIndex];
+        topic = selectedOpt ? selectedOpt.textContent.replace(/\s*\(.*\)$/, '').trim() : '';
+      }
+
       if (!topic) {
-        showToast('Please select a topic.', 'error');
+        showToast('Please select a topic or event.', 'error');
         return;
       }
       if (!message) {
         showToast('Please enter your feedback message.', 'error');
+        return;
+      }
+      if (message.length > 1000) {
+        showToast('Feedback must not exceed 1000 characters.', 'error');
         return;
       }
       if (!rating) {
@@ -662,19 +736,31 @@
           topic,
           rating: parseInt(rating, 10),
           message,
-          user_name: (token && user && user.name) ? user.name : (nameInput || 'Anonymous')
+          user_name: (token && user && user.name) ? user.name : (nameInput || 'Anonymous'),
+          event_id: eventId,
+          would_recommend: recommend || null
         });
 
         showToast('Thank you for your feedback!');
-        document.getElementById('topicSelect').value = '';
+        topicSelect.value = '';
         document.getElementById('messageInput').value = '';
+        document.getElementById('charCount').textContent = '0 / 1000';
         document.querySelector('input[name="rating"][value="3"]').checked = true;
+        const recChecked = document.querySelector('input[name="recommend"]:checked');
+        if (recChecked) recChecked.checked = false;
+        if (eventSelect) eventSelect.value = '';
         if (!token) document.getElementById('nameInput').value = '';
 
         // Refresh the reviews list
         const activeFilter = document.getElementById('filterSelect').value;
         loadReviews(activeFilter);
       } catch (err) {
+        showToast(err.message || 'Failed to submit feedback.', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Feedback';
+      }
+    }
         showToast(err.message || 'Failed to submit feedback.', 'error');
       } finally {
         submitBtn.disabled = false;
