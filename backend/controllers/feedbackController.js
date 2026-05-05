@@ -4,18 +4,19 @@ const GENERAL_TOPICS = ['General', 'Website Experience', 'Event Organization', '
 
 // GET /api/feedback/topics
 const getTopics = async (req, res) => {
+  let eventTopics = [];
   try {
     const today = new Date().toISOString().slice(0, 10);
     const [pastEvents] = await pool.query(
       'SELECT DISTINCT title FROM events WHERE date < ? ORDER BY date DESC',
       [today]
     );
-    const eventTopics = pastEvents.map(e => e.title);
-    res.json({ topics: [...eventTopics, ...GENERAL_TOPICS] });
+    eventTopics = pastEvents.map(e => e.title);
   } catch (error) {
-    console.error('Error fetching topics:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error fetching event topics:', error);
+    // Fall through and return just the general topics
   }
+  res.json({ topics: [...eventTopics, ...GENERAL_TOPICS] });
 };
 
 // GET /api/feedback
