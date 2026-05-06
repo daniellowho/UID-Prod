@@ -1,4 +1,5 @@
 const { pool } = require('../config/database');
+const { sendCustomEmail } = require('../ai/emailService');
 
 const getAnalytics = async (req, res) => {
   try {
@@ -113,4 +114,20 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { getAnalytics, getAllUsers };
+const sendEmail = async (req, res) => {
+  try {
+    const { to, recipientName, subject, message } = req.body;
+
+    if (!to || !subject || !message) {
+      return res.status(400).json({ error: 'to, subject, and message are required' });
+    }
+
+    await sendCustomEmail({ to, recipientName, subject, message });
+    res.json({ message: 'Email sent successfully' });
+  } catch (error) {
+    console.error('[Admin] Failed to send custom email:', error);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
+};
+
+module.exports = { getAnalytics, getAllUsers, sendEmail };
