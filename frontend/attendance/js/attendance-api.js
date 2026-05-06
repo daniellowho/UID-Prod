@@ -1,5 +1,9 @@
-// Points to the existing backend
-const ATTENDANCE_API_BASE = 'http://localhost:3000/api';
+// Use a relative path in production so the attendance pages work on any
+// deployment (e.g. Railway). Fall back to the absolute localhost URL only
+// when running locally, mirroring the logic in frontend/js/config.js.
+const ATTENDANCE_API_BASE = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+  ? 'http://localhost:3000/api'
+  : '/api';
 
 const getToken = () => localStorage.getItem('token');
 
