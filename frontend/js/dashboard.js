@@ -60,7 +60,11 @@ function updateThemeIcon(theme, sunIcon, moonIcon) {
 async function loadUserData() {
   try {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    document.getElementById('userName').textContent = user.name || 'User';
+    const avatarEl = document.getElementById('userAvatar');
+    if (avatarEl && user.name) {
+      avatarEl.title = user.name;
+      avatarEl.innerHTML = `<span style="font-weight:700;font-size:0.85rem;">${(user.name || 'U').charAt(0).toUpperCase()}</span>`;
+    }
     document.getElementById('welcomeName').textContent = user.name ? user.name.split(' ')[0] : 'User';
 
     const registrations = await RegistrationsAPI.getMyRegistrations();

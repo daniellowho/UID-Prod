@@ -62,8 +62,11 @@ function updateNavigation() {
     if (profileLink) profileLink.style.display = 'block';
     if (userInfo) {
       userInfo.style.display = 'flex';
-      const userNameEl = document.getElementById('userName');
-      if (userNameEl) userNameEl.textContent = user.name || 'User';
+      const avatarEl = document.getElementById('userAvatar');
+      if (avatarEl && user.name) {
+        avatarEl.title = user.name;
+        avatarEl.innerHTML = `<span style="font-weight:700;font-size:0.85rem;">${(user.name || 'U').charAt(0).toUpperCase()}</span>`;
+      }
     }
     
     document.getElementById('logoutBtn')?.addEventListener('click', (e) => {

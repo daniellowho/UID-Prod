@@ -366,6 +366,19 @@ body {
   letter-spacing: -0.01em;
 }
 
+.nav-user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: default;
+  flex-shrink: 0;
+}
+
 #logoutBtn {
   color: var(--danger-color);
   text-decoration: none;
