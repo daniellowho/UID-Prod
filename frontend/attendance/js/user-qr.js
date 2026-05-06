@@ -17,16 +17,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   const noRegCard = document.getElementById('noRegCard');
 
   // Load user's approved registrations
+  let allRegistrations = [];
   let approvedRegistrations = [];
   try {
-    const regs = await AttendanceAPI.getMyRegistrations();
-    approvedRegistrations = regs.filter(r => r.status === 'approved');
+    allRegistrations = await AttendanceAPI.getMyRegistrations() || [];
+    approvedRegistrations = allRegistrations.filter(r => r.status === 'approved');
   } catch (e) {
     console.error('Failed to load registrations', e);
   }
 
   if (approvedRegistrations.length === 0) {
-    eventSelect.innerHTML = '<option value="">No approved registrations</option>';
+    const msgElement = document.querySelector('#noRegCard .empty-state p');
+    if (allRegistrations.length > 0) {
+      eventSelect.innerHTML = '<option value="">Awaiting Approval</option>';
+      if (msgElement) msgElement.innerHTML = 'Your event registrations are currently <strong>pending admin approval</strong>.<br>Please check back later for your QR pass once approved.';
+    } else {
+      eventSelect.innerHTML = '<option value="">No registrations found</option>';
+      if (msgElement) msgElement.innerHTML = 'You have not registered for any events yet.';
+    }
     noRegCard.style.display = 'block';
     return;
   }
