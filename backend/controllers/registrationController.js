@@ -1,4 +1,7 @@
 const { pool } = require('../config/database');
+const { v4: uuidv4 } = require('uuid');
+const QRCode = require('qrcode');
+const { sendQRCodeEmail } = require('../ai/emailService');
 
 const registerForEvent = async (req, res) => {
   const connection = await pool.getConnection();
@@ -126,6 +129,24 @@ const updateRegistrationStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
+    // When approving, fetch user+event details needed for QR email
+    let reg = null;
+    if (status === 'approved') {
+      const [rows] = await pool.query(
+        `SELECT r.*, u.name as user_name, u.email as user_email,
+                e.title as event_title, e.date as event_date, e.location as event_location
+         FROM registrations r
+         JOIN users u ON r.user_id = u.id
+         JOIN events e ON r.event_id = e.id
+         WHERE r.id = ?`,
+        [registrationId]
+      );
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'Registration not found' });
+      }
+      reg = rows[0];
+    }
+
     const [result] = await pool.query(
       'UPDATE registrations SET status = ? WHERE id = ?',
       [status, registrationId]
@@ -135,7 +156,49 @@ const updateRegistrationStatus = async (req, res) => {
       return res.status(404).json({ error: 'Registration not found' });
     }
 
+    // On approval, generate/get attendance token and queue QR code email
+    let qrPayload = null;
+    if (status === 'approved' && reg) {
+      const [existing] = await pool.query(
+        'SELECT * FROM attendance_tokens WHERE user_id = ? AND event_id = ?',
+        [reg.user_id, reg.event_id]
+      );
+
+      let token;
+      if (existing.length > 0) {
+        token = existing[0].token;
+      } else {
+        token = uuidv4();
+        await pool.query(
+          'INSERT INTO attendance_tokens (user_id, event_id, token) VALUES (?, ?, ?)',
+          [reg.user_id, reg.event_id, token]
+        );
+      }
+
+      const qrDataUrl = await QRCode.toDataURL(token, {
+        width: 220,
+        margin: 2,
+        color: { dark: '#1e293b', light: '#ffffff' }
+      });
+
+      qrPayload = { reg, token, qrDataUrl };
+    }
+
     res.json({ message: `Registration ${status} successfully` });
+
+    // Send QR code email after response (non-blocking)
+    if (qrPayload) {
+      const { reg: r, token, qrDataUrl } = qrPayload;
+      sendQRCodeEmail({
+        to: r.user_email,
+        userName: r.user_name,
+        eventTitle: r.event_title,
+        eventDate: r.event_date,
+        eventLocation: r.event_location,
+        qrDataUrl,
+        token
+      }).catch(err => console.error('[Email] Failed to send QR code email:', err.message));
+    }
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
