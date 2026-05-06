@@ -1,10 +1,11 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-const DEFAULT_DB_NAME = 'event_management';
-const DEFAULT_DB_HOST = 'localhost';
+const DEFAULT_DB_HOST = '127.0.0.1';
+const DEFAULT_DB_PORT = 3306;
 const DEFAULT_DB_USER = 'root';
 const DEFAULT_DB_PASSWORD = '';
+const DEFAULT_DB_NAME = 'event_management';
 
 const getDatabaseUrl = () => process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.MYSQL_PUBLIC_URL;
 
@@ -25,14 +26,25 @@ const parseDatabaseUrl = (databaseUrl) => {
 };
 
 const getDatabaseConfig = ({ includeDatabase = true } = {}) => {
-  const urlConfig = parseDatabaseUrl(getDatabaseUrl());
-  const database = process.env.DB_NAME || urlConfig.database || DEFAULT_DB_NAME;
+  const databaseUrl = getDatabaseUrl();
+  const urlConfig = parseDatabaseUrl(databaseUrl);
+
+  // When a connection URL is present (e.g. injected by Railway), its values take
+  // priority over individual DB_* env vars so that a locally-committed .env file
+  // cannot accidentally override the platform-provided host/credentials.
+  const host = (databaseUrl ? urlConfig.host : null) || process.env.DB_HOST || DEFAULT_DB_HOST;
+  const port = (databaseUrl ? urlConfig.port : null) || (process.env.DB_PORT ? Number(process.env.DB_PORT) : DEFAULT_DB_PORT);
+  const user = (databaseUrl ? urlConfig.user : null) || process.env.DB_USER || DEFAULT_DB_USER;
+  const password = (databaseUrl ? urlConfig.password : null) ?? process.env.DB_PASSWORD ?? DEFAULT_DB_PASSWORD;
+  const ssl = (databaseUrl ? urlConfig.ssl : null) || (process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined);
+  const database = (databaseUrl ? urlConfig.database : null) || process.env.DB_NAME || DEFAULT_DB_NAME;
+
   const config = {
-    host: process.env.DB_HOST || urlConfig.host || DEFAULT_DB_HOST,
-    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : urlConfig.port,
-    user: process.env.DB_USER || urlConfig.user || DEFAULT_DB_USER,
-    password: process.env.DB_PASSWORD ?? urlConfig.password ?? DEFAULT_DB_PASSWORD,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : urlConfig.ssl
+    host,
+    port,
+    user,
+    password,
+    ssl
   };
 
   if (includeDatabase) {
@@ -72,7 +84,7 @@ const pool = mysql.createPool({
 });
 
 const initDatabase = async () => {
-  const databaseName = process.env.DB_NAME || parseDatabaseUrl(getDatabaseUrl()).database || DEFAULT_DB_NAME;
+  const databaseName = getDatabaseConfig().database;
   const connection = await connectWithRetry(getDatabaseConfig({ includeDatabase: false }));
 
   await connection.query(`CREATE DATABASE IF NOT EXISTS ${mysql.escapeId(databaseName)}`);

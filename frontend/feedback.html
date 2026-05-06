@@ -335,6 +335,19 @@
       from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+
+    .nav-user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: default;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -369,7 +382,12 @@
           </svg>
         </button>
         <div class="user-info" id="userInfo" style="display: none;">
-          <span id="userName"></span>
+          <div class="nav-user-avatar" id="userAvatar" title="">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
           <a href="#" id="logoutBtn">Logout</a>
         </div>
       </div>
@@ -390,6 +408,11 @@
         <!-- ── Submit Form ── -->
         <div class="feedback-form-card">
           <h2>Leave a Review</h2>
+
+          <div id="loggedInActions" style="display:none; margin-bottom: 16px; display: none;">
+            <a href="events.html" class="btn btn-secondary" style="display:inline-block; margin-right:8px; margin-bottom:8px;">← Browse Events</a>
+            <a href="user-dashboard.html" class="btn btn-primary" style="display:inline-block; margin-bottom:8px;">Go to Dashboard</a>
+          </div>
 
           <div class="form-group" id="nameGroup">
             <label for="nameInput">Your Name</label>
@@ -514,7 +537,14 @@
 
       if (token && user && user.name) {
         userInfo.style.display = 'flex';
-        document.getElementById('userName').textContent = user.name;
+        const avatarEl = document.getElementById('userAvatar');
+        if (avatarEl) {
+          avatarEl.title = user.name;
+          const initial = (user.name || 'U').charAt(0).toUpperCase();
+          avatarEl.innerHTML = `<span style="font-weight:700;font-size:0.85rem;">${initial}</span>`;
+        }
+        const loggedInActions = document.getElementById('loggedInActions');
+        if (loggedInActions) loggedInActions.style.display = 'block';
         if (loginLink) loginLink.style.display = 'none';
         if (signupLink) signupLink.style.display = 'none';
         if (dashboardLink) dashboardLink.style.display = 'block';
@@ -577,6 +607,8 @@
 
     const FALLBACK_TOPICS = ['General', 'Website Experience', 'Event Organization', 'Support'];
 
+    let allEventsCache = [];
+
     async function loadTopicsAndEvents() {
       const token = localStorage.getItem('token');
       const topicSelect = document.getElementById('topicSelect');
@@ -601,23 +633,38 @@
       });
 
       // Load events for the event selector
+      await refreshEventDropdown(token);
+
+      // When "Event Organization" topic is selected, reload event dropdown with ALL events
+      topicSelect.addEventListener('change', () => {
+        const isEventOrg = topicSelect.value === 'Event Organization';
+        refreshEventDropdown(token, isEventOrg);
+      });
+    }
+
+    async function refreshEventDropdown(token, showAll = false) {
+      const eventSelect = document.getElementById('eventSelect');
+      const filterSelect = document.getElementById('filterSelect');
       eventSelect.innerHTML = '<option value="">General / Non-event feedback</option>';
       try {
         let events = [];
-        if (token) {
+        if (showAll || !token) {
+          // Load all events when "Event Organization" is selected, or for guests
+          events = await EventsAPI.getAll();
+        } else {
           // Logged-in: show events they attended
           events = await FeedbackAPI.getMyEvents();
-        } else {
-          // Guest: load all past events from topics API
-          const data = await FeedbackAPI.getTopics();
-          if (data && Array.isArray(data.eventTopics)) {
-            events = data.eventTopics;
-          }
         }
+        allEventsCache = events;
         events.forEach(ev => {
           const dateStr = ev.date ? ` (${new Date(ev.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})` : '';
           eventSelect.innerHTML += `<option value="${ev.id}">${escapeHtml(ev.title)}${escapeHtml(dateStr)}</option>`;
-          filterSelect.innerHTML += `<option value="${escapeHtml(ev.title)}">${escapeHtml(ev.title)}</option>`;
+        });
+        // Add events to filter dropdown (avoid duplicates)
+        events.forEach(ev => {
+          if (!filterSelect.querySelector(`option[value="${CSS.escape(ev.title)}"]`)) {
+            filterSelect.innerHTML += `<option value="${escapeHtml(ev.title)}">${escapeHtml(ev.title)}</option>`;
+          }
         });
       } catch (err) {
         console.error('Failed to load events for feedback:', err);

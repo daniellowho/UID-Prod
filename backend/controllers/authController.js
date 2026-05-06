@@ -1,6 +1,7 @@
 const { pool } = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sendWelcomeEmail } = require('../ai/emailService');
 require('dotenv').config();
 
 const signup = async (req, res) => {
@@ -39,6 +40,10 @@ const signup = async (req, res) => {
       token,
       user: { id: result.insertId, name, email, role: 'user', roll_number: roll_number || null, department: department || null }
     });
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail({ to: email, userName: name })
+      .catch(err => console.error('[Email] Failed to send welcome email:', err.message));
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -93,6 +98,10 @@ const googleCallback = async (req, res) => {
         [name, email, googleId, 'user']
       );
       user = { id: result.insertId, name, email, role: 'user' };
+
+      // Send welcome email for new Google sign-ups (non-blocking)
+      sendWelcomeEmail({ to: email, userName: name })
+        .catch(err => console.error('[Email] Failed to send welcome email:', err.message));
     } else {
       user = users[0];
       if (!user.google_id) {
