@@ -147,7 +147,7 @@
 
       if (token && user) {
         userInfo.style.display = 'flex';
-        document.getElementById('userName').textContent = user.name || 'User';
+        const userNameEl = document.getElementById('userName'); if (userNameEl) userNameEl.textContent = user.name || 'User';
         
         loginLink.style.display = 'none';
         signupLink.style.display = 'none';

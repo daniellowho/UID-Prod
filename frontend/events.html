@@ -162,7 +162,7 @@
       const profileLink = document.getElementById('profileLink');
 
       if (token && user) {
-        if (userInfo) { userInfo.style.display = 'flex'; document.getElementById('userName').textContent = user.name || 'User'; }
+        if (userInfo) { userInfo.style.display = 'flex'; const userNameEl = document.getElementById('userName'); if (userNameEl) userNameEl.textContent = user.name || 'User'; }
         if (loginLink) loginLink.style.display = 'none';
         if (signupLink) signupLink.style.display = 'none';
         if (dashboardLink) dashboardLink.style.display = 'block';
