@@ -2,6 +2,7 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 const DEFAULT_DB_HOST = '127.0.0.1';
+const DEFAULT_DB_PORT = 3306;
 const DEFAULT_DB_USER = 'root';
 const DEFAULT_DB_PASSWORD = '';
 const DEFAULT_DB_NAME = 'event_management';
@@ -32,7 +33,7 @@ const getDatabaseConfig = ({ includeDatabase = true } = {}) => {
   // priority over individual DB_* env vars so that a locally-committed .env file
   // cannot accidentally override the platform-provided host/credentials.
   const host = (databaseUrl ? urlConfig.host : null) || process.env.DB_HOST || DEFAULT_DB_HOST;
-  const port = (databaseUrl ? urlConfig.port : null) || (process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined);
+  const port = (databaseUrl ? urlConfig.port : null) || (process.env.DB_PORT ? Number(process.env.DB_PORT) : DEFAULT_DB_PORT);
   const user = (databaseUrl ? urlConfig.user : null) || process.env.DB_USER || DEFAULT_DB_USER;
   const password = (databaseUrl ? urlConfig.password : null) ?? process.env.DB_PASSWORD ?? DEFAULT_DB_PASSWORD;
   const ssl = (databaseUrl ? urlConfig.ssl : null) || (process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined);
