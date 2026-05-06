@@ -52,6 +52,7 @@
         <li><a href="signup.html" id="signupLink">Sign Up</a></li>
         <li><a href="user-dashboard.html" id="dashboardLink" style="display: none;">Dashboard</a></li>
         <li><a href="profile.html" id="profileLink" style="display: none;">Profile</a></li>
+        <li><a href="admin.html" id="adminLink" style="display: none;">Admin</a></li>
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
@@ -164,6 +165,8 @@
         if (signupLink) signupLink.style.display = 'none';
         if (dashboardLink) dashboardLink.style.display = 'block';
         if (profileLink) profileLink.style.display = 'block';
+        const adminLink = document.getElementById('adminLink');
+        if (user.role === 'admin' && adminLink) adminLink.style.display = 'block';
         document.getElementById('logoutBtn')?.addEventListener('click', (e) => { e.preventDefault(); localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.reload(); });
       }
 
@@ -224,7 +227,7 @@
 
       grid.innerHTML = events.map((event, index) => {
         const imageIndex = event.id % defaultImages.length;
-        const imageUrl = event.image_url || defaultImages[imageIndex];
+        const imageUrl = resolveMediaUrl(event.image_url) || defaultImages[imageIndex];
         const eventDate = new Date(event.date);
         const now = new Date(); now.setHours(0,0,0,0);
         const isCompleted = eventDate < now;

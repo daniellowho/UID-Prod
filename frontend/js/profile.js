@@ -24,6 +24,12 @@ function checkAuth() {
     document.getElementById('userFullName').textContent = user.name.split(' ')[0];
     document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
   }
+
+  // Show admin link for admin users
+  const adminLink = document.getElementById('adminLink');
+  if (user.role === 'admin' && adminLink) {
+    adminLink.style.display = 'block';
+  }
 }
 
 async function loadProfile() {

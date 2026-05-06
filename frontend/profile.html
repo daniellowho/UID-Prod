@@ -336,8 +336,12 @@
       <div class="logo">EventHub</div>
       <ul class="nav-links">
         <li><a href="index.html">Home</a></li>
+        <li><a href="events.html">Events</a></li>
+        <li><a href="feedback.html">Feedback</a></li>
         <li><a href="user-dashboard.html">Dashboard</a></li>
         <li><a href="profile.html" class="active">Profile</a></li>
+        <li><a href="attendance/user-qr.html">🎟️ My QR Pass</a></li>
+        <li><a href="admin.html" id="adminLink" style="display: none;">Admin</a></li>
       </ul>
       <div class="nav-actions">
         <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
@@ -610,13 +614,13 @@
 
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
-  <script src="js/profile.js"></script>
   <script>
     (function() {
       const savedTheme = localStorage.getItem('theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
     })();
   </script>
+  <script src="js/profile.js"></script>
   <script src="js/chatbot.js"></script>
 </body>
 </html>
