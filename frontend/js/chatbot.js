@@ -4,8 +4,18 @@
 
   // ── Inject HTML ──────────────────────────────────────────────────────────
   function buildWidget() {
+    // Resolve chatbot.css relative to this script's own location
+    const scripts = document.getElementsByTagName('script');
+    let cssHref = '/css/chatbot.css';
+    for (let i = scripts.length - 1; i >= 0; i--) {
+      const src = scripts[i].getAttribute('src') || '';
+      if (src.includes('chatbot.js')) {
+        cssHref = src.replace(/js\/chatbot\.js.*$/, 'css/chatbot.css');
+        break;
+      }
+    }
     document.head.insertAdjacentHTML('beforeend',
-      '<link rel="stylesheet" href="/css/chatbot.css">'
+      `<link rel="stylesheet" href="${cssHref}">`
     );
 
     document.body.insertAdjacentHTML('beforeend', `
