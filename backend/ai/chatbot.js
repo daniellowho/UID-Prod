@@ -46,15 +46,20 @@ function detectIntent(message) {
 
 // ── DB helpers ─────────────────────────────────────────────────────────────
 async function getUpcomingEvents(limit = 5) {
-  const [rows] = await pool.query(
-    `SELECT id, title, date, start_time, location
-     FROM events
-     WHERE date >= CURDATE()
-     ORDER BY date ASC
-     LIMIT ?`,
-    [limit]
-  );
-  return rows;
+  try {
+    const [rows] = await pool.query(
+      `SELECT id, title, date, start_time, location
+       FROM events
+       WHERE date >= CURDATE()
+       ORDER BY date ASC
+       LIMIT ?`,
+      [limit]
+    );
+    return rows;
+  } catch (error) {
+    console.error('Chatbot DB query failed:', error.message);
+    return [];
+  }
 }
 
 // ── Format helpers ─────────────────────────────────────────────────────────
