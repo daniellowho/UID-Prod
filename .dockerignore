@@ -1,0 +1,10 @@
+# Never bake local environment files into the image.
+# Runtime config is injected by the platform (e.g. Railway) as real env vars.
+backend/.env
+backend/.env.*
+.env
+.env.*
+
+# Development-only artefacts
+backend/node_modules
+node_modules
