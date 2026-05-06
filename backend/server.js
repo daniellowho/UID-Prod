@@ -32,37 +32,39 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    const { pool } = require('./config/database');
-    let [users] = await pool.query('SELECT * FROM users WHERE google_id = ?', [profile.id]);
-    
-    if (users.length === 0) {
-      const [result] = await pool.query(
-        'INSERT INTO users (name, email, google_id, role) VALUES (?, ?, ?, ?)',
-        [profile.displayName, profile.emails[0].value, profile.id, 'user']
-      );
-      return done(null, { id: result.insertId, role: 'user' });
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const { pool } = require('./config/database');
+      let [users] = await pool.query('SELECT * FROM users WHERE google_id = ?', [profile.id]);
+      
+      if (users.length === 0) {
+        const [result] = await pool.query(
+          'INSERT INTO users (name, email, google_id, role) VALUES (?, ?, ?, ?)',
+          [profile.displayName, profile.emails[0].value, profile.id, 'user']
+        );
+        return done(null, { id: result.insertId, role: 'user' });
+      }
+      
+      return done(null, users[0]);
+    } catch (error) {
+      return done(error);
     }
-    
-    return done(null, users[0]);
-  } catch (error) {
-    return done(error);
-  }
-}));
+  }));
+
+  app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+  app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/?error=auth_failed' }), (req, res) => {
+    res.redirect((process.env.GOOGLE_AUTH_SUCCESS_REDIRECT || 'http://localhost:3000') + '?google_auth=success');
+  });
+}
 
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
-
-app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-app.get('/api/auth/google/callback', passport.authenticate('google', { failureRedirect: '/?error=auth_failed' }), (req, res) => {
-  res.redirect('http://localhost:3000?google_auth=success');
-});
 
 // API routes
 app.use('/api/auth', authRoutes);
