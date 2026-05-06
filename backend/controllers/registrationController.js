@@ -156,7 +156,7 @@ const updateRegistrationStatus = async (req, res) => {
       return res.status(404).json({ error: 'Registration not found' });
     }
 
-    // On approval, generate/get attendance token and queue QR code email
+    // On approval, get/create attendance token (DB work stays in request; QR + email are non-blocking)
     let qrPayload = null;
     if (status === 'approved' && reg) {
       const [existing] = await pool.query(
@@ -175,29 +175,34 @@ const updateRegistrationStatus = async (req, res) => {
         );
       }
 
-      const qrDataUrl = await QRCode.toDataURL(token, {
-        width: 220,
-        margin: 2,
-        color: { dark: '#1e293b', light: '#ffffff' }
-      });
-
-      qrPayload = { reg, token, qrDataUrl };
+      qrPayload = { reg, token };
     }
 
     res.json({ message: `Registration ${status} successfully` });
 
-    // Send QR code email after response (non-blocking)
+    // Generate QR data URL and send email after response (non-blocking)
     if (qrPayload) {
-      const { reg: r, token, qrDataUrl } = qrPayload;
-      sendQRCodeEmail({
-        to: r.user_email,
-        userName: r.user_name,
-        eventTitle: r.event_title,
-        eventDate: r.event_date,
-        eventLocation: r.event_location,
-        qrDataUrl,
-        token
-      }).catch(err => console.error('[Email] Failed to send QR code email:', err.message));
+      const { reg: r, token } = qrPayload;
+      (async () => {
+        try {
+          const qrDataUrl = await QRCode.toDataURL(token, {
+            width: 220,
+            margin: 2,
+            color: { dark: '#1e293b', light: '#ffffff' }
+          });
+          await sendQRCodeEmail({
+            to: r.user_email,
+            userName: r.user_name,
+            eventTitle: r.event_title,
+            eventDate: r.event_date,
+            eventLocation: r.event_location,
+            qrDataUrl,
+            token
+          });
+        } catch (err) {
+          console.error('[Email] Failed to send QR code email:', err.message);
+        }
+      })();
     }
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
