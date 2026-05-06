@@ -18,7 +18,8 @@ function checkAuth() {
   }
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  document.getElementById('userName').textContent = user.name || 'User';
+  const userNameEl = document.getElementById('userName');
+  if (userNameEl) userNameEl.textContent = user.name || 'User';
   
   if (user.name) {
     document.getElementById('userFullName').textContent = user.name.split(' ')[0];
@@ -44,7 +45,8 @@ async function loadProfile() {
     document.getElementById('userId').textContent = `#${user.id || 'N/A'}`;
     document.getElementById('accountType').textContent = user.role === 'admin' ? 'Administrator' : 'User';
     document.getElementById('userFullName').textContent = user.name ? user.name.split(' ')[0] : 'User';
-    document.getElementById('userName').textContent = user.name || 'User';
+    const userNameEl2 = document.getElementById('userName');
+    if (userNameEl2) userNameEl2.textContent = user.name || 'User';
 
     if (user.name) {
       document.getElementById('avatarInitial').textContent = user.name.charAt(0).toUpperCase();
@@ -192,7 +194,8 @@ function setupForms() {
 
       document.getElementById('viewName').textContent = name;
       document.getElementById('viewEmail').textContent = email;
-      document.getElementById('userName').textContent = name;
+      const userNameEl3 = document.getElementById('userName');
+      if (userNameEl3) userNameEl3.textContent = name;
       document.getElementById('userFullName').textContent = name.split(' ')[0];
       
       const initial = name.charAt(0).toUpperCase();
