@@ -220,10 +220,137 @@ async function loadRequests() {
 async function loadUsers() {
   try {
     const users = await AdminAPI.getUsers();
-    const container = document.getElementById('usersList');
-    if (!users?.length) { container.innerHTML = '<p class="no-events">No users found.</p>'; return; }
-    container.innerHTML = users.map((u, i) => `<div class="user-item" style="animation-delay:${i * 0.05}s"><div class="user-info"><h4>${escapeHtml(u.name)}</h4><p>${escapeHtml(u.email)}${u.roll_number ? ' · ' + escapeHtml(u.roll_number) : ''}${u.department ? ' · ' + escapeHtml(u.department) : ''}</p></div><div style="text-align:right;"><p><strong>${u.registration_count || 0}</strong> registrations</p><p><strong>${u.approved_count || 0}</strong> approved</p></div></div>`).join('');
+    _allUsers = users || [];
+    populateDeptFilter(_allUsers);
+    displayFilteredUsers();
   } catch (error) { console.error('Failed to load users:', error); }
+}
+
+function populateDeptFilter(users) {
+  const df = document.getElementById('userDeptFilter'); if (!df) return;
+  const current = df.value;
+  const depts = [...new Set(users.map(u => u.department).filter(Boolean))].sort();
+  df.innerHTML = '<option value="all">All Departments</option>';
+  depts.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; df.appendChild(o); });
+  if (current && df.querySelector(`option[value="${current}"]`)) df.value = current;
+}
+
+function displayFilteredUsers() {
+  const container = document.getElementById('usersList');
+  const search = (document.getElementById('userSearchInput')?.value || '').toLowerCase().trim();
+  const roleFilter = document.getElementById('userRoleFilter')?.value || 'all';
+  const deptFilter = document.getElementById('userDeptFilter')?.value || 'all';
+  const sortBy = document.getElementById('userSortSelect')?.value || 'newest';
+
+  let filtered = [..._allUsers];
+
+  // Search filter
+  if (search) {
+    filtered = filtered.filter(u =>
+      (u.name || '').toLowerCase().includes(search) ||
+      (u.email || '').toLowerCase().includes(search) ||
+      (u.roll_number || '').toLowerCase().includes(search) ||
+      (u.department || '').toLowerCase().includes(search)
+    );
+  }
+
+  // Role filter
+  if (roleFilter !== 'all') {
+    filtered = filtered.filter(u => u.role === roleFilter);
+  }
+
+  // Department filter
+  if (deptFilter !== 'all') {
+    filtered = filtered.filter(u => u.department === deptFilter);
+  }
+
+  // Sort
+  switch (sortBy) {
+    case 'oldest': filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); break;
+    case 'name-asc': filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '')); break;
+    case 'name-desc': filtered.sort((a, b) => (b.name || '').localeCompare(a.name || '')); break;
+    case 'regs-desc': filtered.sort((a, b) => (b.registration_count || 0) - (a.registration_count || 0)); break;
+    default: filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); break;
+  }
+
+  // Update counter
+  const counter = document.getElementById('usersCount');
+  if (counter) counter.textContent = `Showing ${filtered.length} of ${_allUsers.length} user${_allUsers.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    container.innerHTML = '<p class="no-events">No users match your filters.</p>';
+    return;
+  }
+
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+  container.innerHTML = filtered.map((u, i) => {
+    const isSelf = u.id === currentUser.id;
+    const roleBadge = u.role === 'admin'
+      ? '<span style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">Admin</span>'
+      : '<span style="background:rgba(16,185,129,0.15);color:var(--success-color);padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">User</span>';
+
+    const deptBadge = u.department
+      ? `<span style="background:var(--card-bg);border:1px solid var(--border-color);padding:2px 8px;border-radius:99px;font-size:0.75rem;color:var(--text-secondary);">${escapeHtml(u.department)}</span>`
+      : '';
+
+    const joinDate = u.created_at ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+
+    const toggleRoleBtn = isSelf
+      ? ''
+      : `<button class="btn btn-sm" style="font-size:0.75rem;padding:5px 12px;background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-primary);border-radius:6px;cursor:pointer;" onclick="toggleUserRole(${u.id}, '${u.role}')" title="${u.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}">${u.role === 'admin' ? '⬇ Demote' : '⬆ Promote'}</button>`;
+
+    const deleteBtn = isSelf
+      ? ''
+      : `<button class="btn btn-danger btn-sm" style="font-size:0.75rem;padding:5px 12px;" onclick="deleteUserAccount(${u.id}, '${escapeHtml(u.name).replace(/'/g, "\\'")}')" title="Delete this user's account">🗑 Delete</button>`;
+
+    return `<div class="user-item" style="animation-delay:${i * 0.05}s">
+      <div class="user-info" style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+          <h4 style="margin:0;">${escapeHtml(u.name)}${isSelf ? ' <span style="font-size:0.7rem;color:var(--primary-color);">(you)</span>' : ''}</h4>
+          ${roleBadge}
+          ${deptBadge}
+        </div>
+        <p style="margin:0;font-size:0.85rem;color:var(--text-secondary);">
+          ${escapeHtml(u.email)}${u.roll_number ? ' · ' + escapeHtml(u.roll_number) : ''}${joinDate ? ' · Joined ' + joinDate : ''}
+        </p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="text-align:right;min-width:80px;">
+          <p style="margin:0;font-size:0.85rem;"><strong>${u.registration_count || 0}</strong> regs</p>
+          <p style="margin:0;font-size:0.85rem;color:var(--success-color);"><strong>${u.approved_count || 0}</strong> approved</p>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${toggleRoleBtn}
+          ${deleteBtn}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleUserRole(userId, currentRole) {
+  const newRole = currentRole === 'admin' ? 'user' : 'admin';
+  const action = newRole === 'admin' ? 'promote to Admin' : 'demote to User';
+  if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+  try {
+    const result = await AdminAPI.updateUserRole(userId, newRole);
+    showAlert('Role Updated', result.message, 'success');
+    loadUsers();
+  } catch (error) {
+    showAlert('Error', error.message, 'error');
+  }
+}
+
+async function deleteUserAccount(userId, userName) {
+  if (!confirm(`⚠️ Are you sure you want to permanently delete "${userName}"?\n\nThis will also remove all their registrations, feedback, and attendance records. This action cannot be undone.`)) return;
+  try {
+    const result = await AdminAPI.deleteUser(userId);
+    showAlert('User Deleted', result.message, 'success');
+    loadAdminData();
+  } catch (error) {
+    showAlert('Error', error.message, 'error');
+  }
 }
 
 function getStatusColor(s) { return { pending: '#f59e0b', approved: '#10b981', denied: '#ef4444' }[s] || '#6366f1'; }
@@ -296,6 +423,12 @@ function escapeHtml(text) { const d = document.createElement('div'); d.textConte
 
 document.getElementById('statusFilter')?.addEventListener('change', loadRequests);
 document.getElementById('eventFilter')?.addEventListener('change', loadRequests);
+
+// ─── User Management Filters ───
+document.getElementById('userSearchInput')?.addEventListener('input', displayFilteredUsers);
+document.getElementById('userRoleFilter')?.addEventListener('change', displayFilteredUsers);
+document.getElementById('userDeptFilter')?.addEventListener('change', displayFilteredUsers);
+document.getElementById('userSortSelect')?.addEventListener('change', displayFilteredUsers);
 
 // ─── Email Management ───
 async function loadEmailLogs() {

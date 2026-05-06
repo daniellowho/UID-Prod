@@ -230,7 +230,28 @@
       </div>
 
       <div id="usersTab" class="tab-content">
-        <h2>All Users</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <h2 style="margin:0;">User Management</h2>
+          <span id="usersCount" style="font-size:0.9rem;color:var(--text-secondary);"></span>
+        </div>
+        <div class="filters" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px;">
+          <input type="text" id="userSearchInput" placeholder="Search by name, email, roll no…" style="flex:1;min-width:200px;padding:10px 15px;border:2px solid var(--border-color);border-radius:var(--border-radius-sm);font-size:0.95rem;background:var(--bg-color);color:var(--text-primary);transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='var(--border-color)'">
+          <select id="userRoleFilter" style="padding:10px 15px;border:2px solid var(--border-color);border-radius:var(--border-radius-sm);font-size:0.95rem;background:var(--bg-color);color:var(--text-primary);">
+            <option value="all">All Roles</option>
+            <option value="user">Users Only</option>
+            <option value="admin">Admins Only</option>
+          </select>
+          <select id="userDeptFilter" style="padding:10px 15px;border:2px solid var(--border-color);border-radius:var(--border-radius-sm);font-size:0.95rem;background:var(--bg-color);color:var(--text-primary);">
+            <option value="all">All Departments</option>
+          </select>
+          <select id="userSortSelect" style="padding:10px 15px;border:2px solid var(--border-color);border-radius:var(--border-radius-sm);font-size:0.95rem;background:var(--bg-color);color:var(--text-primary);">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name-asc">Name (A–Z)</option>
+            <option value="name-desc">Name (Z–A)</option>
+            <option value="regs-desc">Most Registrations</option>
+          </select>
+        </div>
         <div id="usersList" class="users-list"></div>
       </div>
 

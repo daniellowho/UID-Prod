@@ -104,7 +104,6 @@ const getAllUsers = async (req, res) => {
         COUNT(CASE WHEN r.status = 'approved' THEN 1 END) as approved_count
       FROM users u
       LEFT JOIN registrations r ON u.id = r.user_id
-      WHERE u.role = 'user'
       GROUP BY u.id, u.name, u.email, u.role, u.roll_number, u.department, u.created_at
       ORDER BY u.created_at DESC
     `);
@@ -130,4 +129,54 @@ const sendEmail = async (req, res) => {
   }
 };
 
-module.exports = { getAnalytics, getAllUsers, sendEmail };
+const deleteUser = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+
+    // Prevent admin from deleting themselves
+    if (userId === req.user.id) {
+      return res.status(400).json({ error: 'You cannot delete your own account.' });
+    }
+
+    const [user] = await pool.query('SELECT id, name, email, role FROM users WHERE id = ?', [userId]);
+    if (user.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // CASCADE on FKs handles registrations, feedback, attendance_tokens
+    await pool.query('DELETE FROM users WHERE id = ?', [userId]);
+    res.json({ message: `User "${user[0].name}" has been deleted.` });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user.' });
+  }
+};
+
+const updateUserRole = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    const { role } = req.body;
+
+    if (!['user', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role. Must be "user" or "admin".' });
+    }
+
+    // Prevent admin from demoting themselves
+    if (userId === req.user.id && role !== 'admin') {
+      return res.status(400).json({ error: 'You cannot remove your own admin privileges.' });
+    }
+
+    const [user] = await pool.query('SELECT id, name FROM users WHERE id = ?', [userId]);
+    if (user.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    await pool.query('UPDATE users SET role = ? WHERE id = ?', [role, userId]);
+    res.json({ message: `${user[0].name}'s role updated to "${role}".` });
+  } catch (error) {
+    console.error('Update user role error:', error);
+    res.status(500).json({ error: 'Failed to update user role.' });
+  }
+};
+
+module.exports = { getAnalytics, getAllUsers, sendEmail, deleteUser, updateUserRole };

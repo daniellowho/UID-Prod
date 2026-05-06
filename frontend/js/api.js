@@ -103,6 +103,15 @@ const AdminAPI = {
 
   getUsers: () => apiRequest('/admin/users'),
 
+  deleteUser: (userId) => apiRequest(`/admin/users/${userId}`, {
+    method: 'DELETE'
+  }),
+
+  updateUserRole: (userId, role) => apiRequest(`/admin/users/${userId}/role`, {
+    method: 'PUT',
+    body: JSON.stringify({ role })
+  }),
+
   getEmailLogs: () => apiRequest('/admin/email/logs'),
 
   sendEmail: (payload) => apiRequest('/admin/email/send', {
