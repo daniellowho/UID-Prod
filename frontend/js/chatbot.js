@@ -207,7 +207,7 @@
     showTyping();
 
     try {
-      const res = await fetch('/api/chatbot/message', {
+      const res = await fetch(`${typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/api'}/chatbot/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg })

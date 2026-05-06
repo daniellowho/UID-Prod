@@ -13,6 +13,7 @@ const registrationRoutes = require('./routes/registrations');
 const adminRoutes = require('./routes/admin');
 const feedbackRoutes = require('./routes/feedback');
 const attendanceRoutes = require('./routes/attendance');
+const chatbotRoutes = require('./ai/chatbot');
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use('/api/registrations', registrationRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Serve frontend static files (for Railway / production deployment)
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
