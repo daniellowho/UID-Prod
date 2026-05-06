@@ -31,13 +31,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  eventSelect.innerHTML = '<option value="">— Select an event —</option>' +
-    approvedRegistrations.map(r =>
-      `<option value="${r.event_id}">${r.title} (${new Date(r.date).toLocaleDateString()})</option>`
-    ).join('');
+  // Populate dropdown without the blank "Select an event" option
+  eventSelect.innerHTML = approvedRegistrations.map(r =>
+    `<option value="${r.event_id}">${r.title} (${new Date(r.date).toLocaleDateString()})</option>`
+  ).join('');
 
   eventSelect.addEventListener('change', () => loadQR(eventSelect.value));
   document.getElementById('refreshBtn').addEventListener('click', () => loadQR(eventSelect.value));
+
+  // Auto-load the first event's QR code immediately
+  if (approvedRegistrations.length > 0) {
+    eventSelect.value = approvedRegistrations[0].event_id;
+    loadQR(approvedRegistrations[0].event_id);
+  }
 
   let loadedEventId = null; // track last loaded event for refresh
   let statusPoller = null;  // setInterval id for polling
