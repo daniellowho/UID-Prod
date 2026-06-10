@@ -84,6 +84,7 @@
     windowEl.setAttribute('aria-hidden', 'false');
     toggleBtn.classList.add('open');
     toggleBtn.setAttribute('aria-label', 'Close chat assistant');
+    toggleBtn.setAttribute('aria-expanded', 'true');
     requestAnimationFrame(() => inputEl.focus());
   }
 
@@ -92,6 +93,8 @@
     windowEl.setAttribute('aria-hidden', 'true');
     toggleBtn.classList.remove('open');
     toggleBtn.setAttribute('aria-label', 'Open chat assistant');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+    toggleBtn.focus();
   }
 
   // ── Escape HTML ──────────────────────────────────────────────────────────
