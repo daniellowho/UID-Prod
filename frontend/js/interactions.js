@@ -1,25 +1,23 @@
 /**
- * Apple-inspired micro-interactions
- * Scroll reveal, card glow, button press, theme toggle
+ * Minimal EventHub micro-interactions
+ * Scroll reveal, cursor glow, button press, navbar polish
  */
 
 (function () {
   'use strict';
 
-  /* ── Default dark theme ── */
+  /* ── Minimal light-first theme ── */
   (function applyDefaultTheme() {
-    const saved = localStorage.getItem('theme');
-    if (!saved) {
-      localStorage.setItem('theme', 'dark');
-    }
-    document.documentElement.setAttribute('data-theme', saved || 'dark');
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
   })();
 
   /* ── Scroll reveal ── */
   function initScrollReveal() {
     const revealTargets = document.querySelectorAll(
       '.event-card, .stat-card, .analytics-card, .registration-item, ' +
-      '.admin-event-item, .profile-card, .request-item, .user-item'
+      '.admin-event-item, .profile-card, .request-item, .user-item, ' +
+      '.review-card, .feedback-form-card, .auth-box, .detail-info-item'
     );
 
     if (!('IntersectionObserver' in window)) return;
@@ -45,7 +43,7 @@
 
   /* ── Card glow on hover (cursor-relative) ── */
   function initCardGlow() {
-    document.querySelectorAll('.event-card, .stat-card, .analytics-card').forEach((card) => {
+    document.querySelectorAll('.event-card, .stat-card, .analytics-card, .review-card, .card').forEach((card) => {
       card.addEventListener('mousemove', (e) => {
         const rect = card.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -95,37 +93,6 @@
     });
   }
 
-  /* ── Theme toggle sync across pages ── */
-  function initThemeToggle() {
-    const toggle = document.getElementById('themeToggle');
-    if (!toggle) return;
-
-    const sunIcon = toggle.querySelector('.sun-icon');
-    const moonIcon = toggle.querySelector('.moon-icon');
-
-    function syncIcons(theme) {
-      if (!sunIcon || !moonIcon) return;
-      if (theme === 'dark') {
-        sunIcon.style.display = 'none';
-        moonIcon.style.display = 'block';
-      } else {
-        sunIcon.style.display = 'block';
-        moonIcon.style.display = 'none';
-      }
-    }
-
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    syncIcons(current);
-
-    toggle.addEventListener('click', () => {
-      const now = document.documentElement.getAttribute('data-theme');
-      const next = now === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem('theme', next);
-      syncIcons(next);
-    });
-  }
-
   /* ── Init on DOM ready ── */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
@@ -138,6 +105,5 @@
     initCardGlow();
     initButtonPress();
     initNavbar();
-    initThemeToggle();
   }
 })();

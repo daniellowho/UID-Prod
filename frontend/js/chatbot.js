@@ -2,6 +2,9 @@
 (function () {
   'use strict';
 
+  if (window.EventHubChatbotMounted) return;
+  window.EventHubChatbotMounted = true;
+
   // ── Inject HTML ──────────────────────────────────────────────────────────
   function buildWidget() {
     // Resolve chatbot.css relative to this script's own location
@@ -14,9 +17,19 @@
         break;
       }
     }
-    document.head.insertAdjacentHTML('beforeend',
-      `<link rel="stylesheet" href="${cssHref}">`
-    );
+    if (!document.getElementById('chatbotCriticalStyle')) {
+      document.head.insertAdjacentHTML('beforeend', `
+        <style id="chatbotCriticalStyle">
+          #chatbotWindow { display: none; }
+          #chatbotWindow.visible { display: flex; }
+        </style>`);
+    }
+
+    if (!document.getElementById('chatbotStylesheet')) {
+      document.head.insertAdjacentHTML('beforeend',
+        `<link id="chatbotStylesheet" rel="stylesheet" href="${cssHref}">`
+      );
+    }
 
     document.body.insertAdjacentHTML('beforeend', `
       <!-- Chatbot toggle button -->
@@ -30,7 +43,7 @@
       </button>
 
       <!-- Chatbot window -->
-      <div class="chatbot-window" id="chatbotWindow" role="dialog" aria-label="EventHub Assistant">
+      <div class="chatbot-window" id="chatbotWindow" role="dialog" aria-label="EventHub Assistant" aria-hidden="true">
         <div class="chatbot-header">
           <div class="chatbot-avatar">🤖</div>
           <div class="chatbot-header-info">
@@ -68,13 +81,15 @@
   // ── Open / close ─────────────────────────────────────────────────────────
   function openChat() {
     windowEl.classList.add('visible');
+    windowEl.setAttribute('aria-hidden', 'false');
     toggleBtn.classList.add('open');
     toggleBtn.setAttribute('aria-label', 'Close chat assistant');
-    inputEl.focus();
+    requestAnimationFrame(() => inputEl.focus());
   }
 
   function closeChat() {
     windowEl.classList.remove('visible');
+    windowEl.setAttribute('aria-hidden', 'true');
     toggleBtn.classList.remove('open');
     toggleBtn.setAttribute('aria-label', 'Open chat assistant');
   }
@@ -138,6 +153,47 @@
       btn.addEventListener('click', () => sendMessage(label));
       suggestionsEl.appendChild(btn);
     });
+  }
+
+  // ── Offline fallback so the assistant still responds if the API is unavailable ──
+  function localFallback(message) {
+    const lower = message.toLowerCase();
+    if (/\b(hi|hello|hey|howdy)\b/.test(lower)) {
+      return {
+        type: 'text',
+        reply: "👋 Hi! I can help with EventHub navigation, bookings, event timing, and support.",
+        suggestions: ['What events are happening?', 'Book a ticket', 'My bookings']
+      };
+    }
+    if (/\b(event|events|happening|upcoming|list|show)\b/.test(lower)) {
+      return {
+        type: 'link',
+        reply: '🎉 You can browse the latest events on the Events page.',
+        action: { label: 'Open Events →', url: 'events.html' },
+        suggestions: ['Book a ticket', 'Event timing & dates', 'Contact organizer']
+      };
+    }
+    if (/\b(book|register|ticket|join|attend)\b/.test(lower)) {
+      return {
+        type: 'link',
+        reply: '🎟️ Open an event, then use the register button. You may need to sign in first.',
+        action: { label: 'Browse events →', url: 'events.html' },
+        suggestions: ['My bookings', 'Contact organizer']
+      };
+    }
+    if (/\b(my|booking|registration|dashboard|ticket)\b/.test(lower)) {
+      return {
+        type: 'link',
+        reply: '📋 Your registrations and statuses live in your dashboard.',
+        action: { label: 'Go to Dashboard →', url: 'user-dashboard.html' },
+        suggestions: ['What events are happening?', 'Contact organizer']
+      };
+    }
+    return {
+      type: 'text',
+      reply: "I’m having trouble reaching the live assistant right now, but I can still help you navigate EventHub.",
+      suggestions: ['What events are happening?', 'Book a ticket', 'My bookings', 'Contact organizer']
+    };
   }
 
   // ── Render a bot response ────────────────────────────────────────────────
@@ -226,9 +282,9 @@
       if (!res.ok) throw new Error('Server error');
       const data = await res.json();
       renderBotResponse(data);
-    } catch {
-      hideTyping();
-      appendMessage("⚠️ Sorry, I couldn't reach the server. Please try again.", 'bot');
+    } catch (error) {
+      console.warn('Chatbot API unavailable, using local fallback:', error);
+      renderBotResponse(localFallback(msg));
     } finally {
       sendBtn.disabled = false;
       inputEl.focus();
